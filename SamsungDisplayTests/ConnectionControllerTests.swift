@@ -189,6 +189,41 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
+    // CONN-06 (regression): a second bootstrap() while a lifecycle task is
+    // already running must be a no-op. Hardware walk #1 observed the WS
+    // tearing down on every popover open because `.onAppear` calls bootstrap()
+    // on each materialization of the MenuBarExtra content view.
+    func test_bootstrap_isIdempotent_whileLifecycleRunning() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        try await waitFor { controller.state == .connected }
+        XCTAssertEqual(spy.connectCalls.count, 1)
+
+        // Simulate the popover being opened a second time.
+        controller.bootstrap()
+        controller.bootstrap()
+
+        // Give any spurious task a chance to misbehave.
+        try await Task.sleep(for: .milliseconds(200))
+
+        XCTAssertEqual(
+            spy.connectCalls.count,
+            1,
+            "bootstrap() while connected must not re-enter the connect loop"
+        )
+        XCTAssertEqual(
+            spy.disconnectCalls,
+            0,
+            "bootstrap() while connected must not tear down the WebSocket"
+        )
+
+        controller.stop()
+    }
+
     // VOL-04 (v1): a send failure logs but does NOT change connection state.
     func test_send_failure_doesNotChangeState() async throws {
         preferences.monitorIP = "192.168.1.10"

@@ -67,7 +67,14 @@ final class ConnectionController {
 
     /// Called once on app launch. Reads `monitorIP` and either starts the
     /// connect loop or transitions to `.noIP` for the popover prompt.
+    ///
+    /// Idempotent: if a `lifecycleTask` is already running, this is a no-op.
+    /// The popover's `.onAppear` fires every time the user opens the menu bar
+    /// item, but the WebSocket must persist across popover open/close cycles.
     func bootstrap() {
+        if lifecycleTask != nil {
+            return
+        }
         guard let ip = preferences.monitorIP, !ip.isEmpty else {
             state = .noIP
             statusMessage = "Not connected — set monitor IP in Settings"
