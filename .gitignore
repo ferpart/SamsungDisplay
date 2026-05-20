@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Claude / local config (per global rule)
+CLAUDE.local.md
+settings.local.json
+.claude/CLAUDE.local.md
