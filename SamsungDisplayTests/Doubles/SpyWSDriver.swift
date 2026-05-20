@@ -2,29 +2,23 @@
 import Foundation
 import os
 
-// MARK: - Wave 0 protocol placeholders
+// MARK: - Wave 1 placeholder (SamsungWSDriving)
 //
-// Wave 1 will declare `SamsungWSDriving` and `NetworkPathObserving` in production
-// code (per the <interfaces> block in 02-00-PLAN.md). Until then, this Wave 0
-// scaffold needs the protocol surface to exist so the doubles below compile and
-// the test target builds.
+// `NetworkPathObserving` now lives in production code
+// (`SamsungDisplay/Connection/NetworkPathObserver.swift`), so its Wave 0
+// placeholder has been removed.
 //
-// TODO(Wave 1): DELETE this placeholder block once
-// `SamsungDisplay/Samsung/SamsungWSDriving.swift` and
-// `SamsungDisplay/Network/NetworkPathObserving.swift` ship and re-export these
-// protocol declarations from the app module.
+// `SamsungWSDriving` is added to production code in Task 2 of 02-01-PLAN
+// (alongside `ConnectionController`). Until that lands, keep this placeholder
+// so SpyWSDriver compiles.
+//
+// TODO(02-01 Task 2): DELETE this `SamsungWSDriving` placeholder once
+// production declares it in `SamsungDisplay/Samsung/SamsungWSActor.swift`.
 
 protocol SamsungWSDriving: Sendable {
     func connect(to ip: String, token: String?) async throws -> String
     func sendKey(_ key: SamsungCommand.Key) async throws
     func disconnect() async
-}
-
-@MainActor
-protocol NetworkPathObserving: AnyObject {
-    var onPathSatisfied: (@MainActor () -> Void)? { get set }
-    func start()
-    func stop()
 }
 
 // MARK: - SpyWSDriver
