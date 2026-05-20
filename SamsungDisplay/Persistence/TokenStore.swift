@@ -19,6 +19,12 @@ struct TokenStore {
     let service: String
     let account: String
 
+    /// The Keychain accessibility class applied to stored tokens. Exposed so
+    /// tests can assert the policy without relying on `SecItemCopyMatching`
+    /// returning the `pdmn` attribute (macOS does not include it in attribute
+    /// queries for generic password items).
+    nonisolated(unsafe) static let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlock
+
     static let shared = TokenStore(
         service: "com.fp.SamsungDisplay.samsungToken",
         account: "default"
@@ -41,7 +47,7 @@ struct TokenStore {
 
         var addQuery = baseQuery
         addQuery[kSecValueData as String] = data
-        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        addQuery[kSecAttrAccessible as String] = TokenStore.accessibility
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {

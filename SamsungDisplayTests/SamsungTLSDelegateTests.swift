@@ -17,19 +17,41 @@ final class SamsungTLSDelegateTests: XCTestCase {
 
     private static let allowedHost = "192.168.1.42"
 
+    /// Self-signed RSA-2048 X.509 DER, CN=test, generated via `openssl req -x509`
+    /// for the sole purpose of constructing a non-nil `SecTrust` in these tests.
+    /// `SecTrustCreateWithCertificates` rejects an empty CFArray on macOS 14+,
+    /// so we must seed it with a real certificate. The cert is never actually
+    /// validated — we only need the trust object so the delegate's
+    /// `let serverTrust = challenge.protectionSpace.serverTrust` guard passes.
+    /// Real trust evaluation is exercised in Plan 06 against the real G95SC.
+    private static let selfSignedCertDER = Data(base64Encoded:
+        "MIIC/zCCAeegAwIBAgIUBugVWSIb137tH8dk8WI1FvIFFZIwDQYJKoZIhvcNAQEL" +
+        "BQAwDzENMAsGA1UEAwwEdGVzdDAeFw0yNjA1MjAwMTI5NTlaFw0yNzA1MjAwMTI5" +
+        "NTlaMA8xDTALBgNVBAMMBHRlc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK" +
+        "AoIBAQDFiPcYeEjhXEyHNJX7T/OgD1vbLQHo/Cs1sJK4q+DwFB4AK2sW5V8DlhbE" +
+        "/zwRSv2IWuix2AvmEdqmAI33fbQ+M9Fm+TAHT/ScB4UstR/T5NqnqiBLwsIz9SZi" +
+        "JE6g/JVQzKJPCIk9L0RagD6RrqZ4Q5dCnj98xyGLrFHJBc4fax0q2GL9jt45CxwO" +
+        "3LXhzlHfYk6Paz93ScYh2TPwoRA53LZGOKVyNOhnIHhPhYDPCgeta4Fy+UtwPIgw" +
+        "LT4IRPHv86FKmclx72ok9TbigyIQw+enq+heq2+c6KkTwNbUvvl3fDqk7i3y9ghI" +
+        "JwDZRGiMqlL0BWrt1/ds5wDVxpOTAgMBAAGjUzBRMB0GA1UdDgQWBBQ01lA5vigp" +
+        "bwoFnUMEoOJo63iuSjAfBgNVHSMEGDAWgBQ01lA5vigpbwoFnUMEoOJo63iuSjAP" +
+        "BgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQC7Kr74xmW44/gK8ISm" +
+        "fD8j14dxp4QHZRMFRFQHKnwdpA3M41pog3WIDB81crrx+FxpZ7E/ppZKsQzsUw56" +
+        "uvuQJoPgzVkreMV/Bfcy/6EHITPcaw7xIgqtrU7+qd+RQIdzs94swwc3XwtgRhjS" +
+        "fi6RuYtWnyRY74s/kr97pfD9HMjhC1DIdut768nfqvT2kPEmcW3zy6Mat11l8AGt" +
+        "CE5etFgGlZe0v+ClPw810EkoWXX1z+0Ngkf9c71Y9m9NC7icnOP292E5PxvmJ2Wf" +
+        "JICAMcnKJdrDDJ3qIC5pOxxyEjmHsKyhgVTzzYNCdgdtdtE++LHfoOqxUXpv6Dpw" +
+        "vLVp"
+    )!
+
     private func makeChallenge(host: String,
                                authenticationMethod: String,
                                includeServerTrust: Bool = true) -> URLAuthenticationChallenge {
-        // For server-trust challenges we attach a trust object built from an empty
-        // certificate array. `SecTrustCreateWithCertificates` accepts an empty CFArray
-        // and returns a non-nil SecTrust — sufficient for verifying the delegate's
-        // disposition path. Real trust evaluation is exercised in Plan 06 against
-        // the actual G95SC.
         var serverTrust: SecTrust?
         if includeServerTrust {
+            let cert = SecCertificateCreateWithData(nil, Self.selfSignedCertDER as CFData)!
             let policy = SecPolicyCreateBasicX509()
-            let emptyCerts = [] as CFArray
-            SecTrustCreateWithCertificates(emptyCerts, policy, &serverTrust)
+            SecTrustCreateWithCertificates([cert] as CFArray, policy, &serverTrust)
         }
 
         let space = URLProtectionSpace(
@@ -166,7 +188,7 @@ final class SamsungTLSDelegateTests: XCTestCase {
 /// `URLProtectionSpace.serverTrust` is read-only and only populated by the system
 /// during real handshakes. Subclassing lets us inject a synthetic trust object for
 /// unit testing the delegate's serverTrust-path logic.
-private final class ProtectionSpaceWithTrust: URLProtectionSpace {
+private final class ProtectionSpaceWithTrust: URLProtectionSpace, @unchecked Sendable {
     private let _trust: SecTrust
 
     init(host: String,
