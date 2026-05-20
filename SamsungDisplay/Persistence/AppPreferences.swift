@@ -11,7 +11,12 @@ import Foundation
 /// `UserDefaults`, so `set` is `nonmutating` (matches the `@AppStorage`
 /// mental model). Inject a custom suite in tests to avoid polluting
 /// `UserDefaults.standard`.
-struct AppPreferences {
+struct AppPreferences: @unchecked Sendable {
+    // `@unchecked Sendable`: `defaults` is a thread-safe `UserDefaults` instance
+    // (Foundation docs: "thread-safe"), held by-reference through an immutable
+    // `let`. The struct exposes no mutable state of its own — all mutation goes
+    // through `UserDefaults` directly. The compiler cannot prove this because
+    // `UserDefaults` is an `NSObject` subclass without `Sendable` conformance.
     let defaults: UserDefaults
 
     static let shared = AppPreferences(defaults: .standard)
