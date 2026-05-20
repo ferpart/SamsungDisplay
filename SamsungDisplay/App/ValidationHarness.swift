@@ -1,3 +1,10 @@
+// Phase 1 hardware-validation harness. Retained for re-validation walks under
+// Debug builds only. NOT referenced from SamsungDisplayApp.body — Phase 2's
+// menu bar shell replaced it entirely. To exercise this harness against new
+// hardware, temporarily add a hidden `Window(id: "harness")` scene to
+// SamsungDisplayApp.body inside an `#if DEBUG` block.
+
+#if DEBUG
 import SwiftUI
 
 /// Phase 1 hardware-validation harness.
@@ -179,3 +186,4 @@ struct ValidationHarnessView: View {
         return formatter.string(from: Date())
     }
 }
+#endif
