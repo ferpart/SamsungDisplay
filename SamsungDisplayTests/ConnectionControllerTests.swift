@@ -7,6 +7,8 @@ final class ConnectionControllerTests: XCTestCase {
     private var spy: SpyWSDriver!
     private var path: FakePathObserver!
     private var defaults: UserDefaults!
+    private var preferences: AppPreferences!
+    private var tokens: TokenStore!
     private let suiteName = "ConnectionControllerTests.suite"
 
     override func setUp() async throws {
@@ -14,69 +16,201 @@ final class ConnectionControllerTests: XCTestCase {
         path = FakePathObserver()
         defaults = UserDefaults(suiteName: suiteName)
         defaults.removePersistentDomain(forName: suiteName)
+        preferences = AppPreferences(defaults: defaults)
+        // Unique keychain service per test run so we don't pollute the real
+        // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
+        tokens = TokenStore(
+            service: "tests.SamsungDisplay.token.\(UUID().uuidString)",
+            account: "test"
+        )
     }
 
     override func tearDown() async throws {
+        tokens.delete()
         defaults.removePersistentDomain(forName: suiteName)
         spy = nil
         path = nil
         defaults = nil
+        preferences = nil
+        tokens = nil
     }
+
+    // MARK: - Helpers
+
+    /// Polls `condition` every 20ms up to `timeout`. Fails the test on timeout.
+    private func waitFor(
+        _ condition: @MainActor () -> Bool,
+        timeout: Duration = .seconds(2),
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async throws {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while clock.now < deadline {
+            if condition() { return }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTFail("Timed out waiting for condition", file: file, line: line)
+    }
+
+    private func makeController(policy: ReconnectPolicy = .default) -> ConnectionController {
+        ConnectionController(
+            ws: spy,
+            pathObserver: path,
+            preferences: preferences,
+            tokens: tokens,
+            policy: policy
+        )
+    }
+
+    // MARK: - Tests
 
     // CONN-05: bootstrap with a saved IP enters connecting.
     func test_bootstrap_withSavedIP_movesToConnecting() async throws {
-        // TODO(Wave 1): construct ConnectionController(ws:pathObserver:preferences:tokens:) with injected spy/path/defaults.
-        // Set defaults monitorIP="192.168.1.10" via injected AppPreferences.
-        // Set spy.nextConnectOutcome = .hang so the controller stays in .connecting.
-        // Call controller.bootstrap()
-        // Assert spy.connectCalls.count == 1 and spy.connectCalls[0].ip == "192.168.1.10"
-        // Assert controller.state == .connecting (within 100ms of bootstrap)
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .hang
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        try await waitFor { self.spy.connectCalls.count == 1 }
+        XCTAssertEqual(spy.connectCalls.first?.ip, "192.168.1.10")
+        XCTAssertEqual(controller.state, .connecting)
+
+        controller.stop()
     }
 
-    // CONN-06: NWPathMonitor .satisfied transitions cancel the current backoff sleep and retry immediately.
+    // CONN-06: NWPathMonitor .satisfied transitions cancel the current backoff
+    // sleep and retry immediately.
     func test_pathSatisfied_cancelsBackoff() async throws {
-        // TODO(Wave 1): bootstrap into a state where spy.nextConnectOutcome = .error(URLError(.timedOut)).
-        // Wait one connect attempt (spy.connectCalls.count == 1, state == .connecting).
-        // Call path.firePathSatisfied() — controller MUST cancel its current Task.sleep and retry.
-        // Within a short window, spy.connectCalls.count should advance to 2 without waiting the full 1s backoff.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .error(URLError(.timedOut))
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        // Wait for the first connect attempt to land.
+        try await waitFor { self.spy.connectCalls.count >= 1 }
+        let baseline = spy.connectCalls.count
+
+        // Kick the path observer BEFORE the 1s backoff sleep can elapse.
+        let clock = ContinuousClock()
+        let startedAt = clock.now
+        path.firePathSatisfied()
+
+        // The kick cancels the in-flight Task.sleep and starts a fresh loop,
+        // which immediately issues another connect. We allow up to 500ms
+        // (generous scheduler jitter); the full backoff would be 1000ms.
+        try await waitFor(
+            { self.spy.connectCalls.count > baseline },
+            timeout: .milliseconds(500)
+        )
+        let elapsed = clock.now - startedAt
+        XCTAssertLessThan(
+            elapsed,
+            .milliseconds(900),
+            "Path-satisfied kick must skip the 1s backoff sleep"
+        )
+
+        controller.stop()
     }
 
     // CONN-06: unauthorized short-circuits the retry loop.
     func test_unauthorized_stopsLoop() async throws {
-        // TODO(Wave 1): spy.nextConnectOutcome = .unauthorized.
-        // bootstrap → controller transitions to .unauthorized; spy.connectCalls.count stays at 1 even after 5 seconds.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .unauthorized
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        try await waitFor { controller.state == .unauthorized }
+        XCTAssertEqual(spy.connectCalls.count, 1)
+
+        // Confirm no further retries — wait a sane window and re-check.
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertEqual(
+            spy.connectCalls.count,
+            1,
+            "unauthorized must short-circuit the loop"
+        )
     }
 
     // CONN-06: wipeTokenAndReconnect clears keychain and re-enters connecting.
     func test_wipeToken_restartsLoop() async throws {
-        // TODO(Wave 1): seed a TokenStore(service: "tests.SamsungDisplay.token", account: "test") with a value;
-        // confirm load() returns it. Then call controller.wipeTokenAndReconnect() with that injected TokenStore.
-        // Assert load() == nil and spy.connectCalls.count incremented.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .hang
+
+        try tokens.save("old-token")
+        XCTAssertEqual(tokens.load(), "old-token")
+
+        let controller = makeController()
+        controller.wipeTokenAndReconnect()
+
+        try await waitFor { self.spy.connectCalls.count == 1 }
+        XCTAssertNil(tokens.load(), "wipeTokenAndReconnect must delete the keychain item")
+        XCTAssertEqual(spy.connectCalls.first?.ip, "192.168.1.10")
+        XCTAssertNil(
+            spy.connectCalls.first?.token,
+            "freshly-wiped loop must connect with token = nil"
+        )
+
+        controller.stop()
     }
 
     // VOL-01 (v1): send(.volUp) forwards KEY_VOLUP to the driver.
     func test_send_volUp_forwardsKeyVolup() async throws {
-        // TODO(Wave 1): bootstrap to .connected (spy.nextConnectOutcome = .success(token: "t")).
-        // controller.send(.volUp); allow the spawned Task to run.
-        // Assert spy.sendKeyCalls.last == .volUp.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        try await waitFor { controller.state == .connected }
+
+        controller.send(.volUp)
+        try await waitFor { self.spy.sendKeyCalls.last == .volUp }
+
+        controller.stop()
     }
 
     // VOL-02: send(.mute) forwards KEY_MUTE.
     func test_send_mute_forwardsKeyMute() async throws {
-        // TODO(Wave 1): same shape; assert .mute appended.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+
+        try await waitFor { controller.state == .connected }
+
+        controller.send(.mute)
+        try await waitFor { self.spy.sendKeyCalls.last == .mute }
+
+        controller.stop()
     }
 
     // VOL-04 (v1): a send failure logs but does NOT change connection state.
     func test_send_failure_doesNotChangeState() async throws {
-        // TODO(Wave 1): bootstrap to .connected. spy.nextSendKeyError = URLError(.networkConnectionLost).
-        // controller.send(.volUp); assert controller.state == .connected (no state change).
-        // Assert controller.logEntries.last contains "send" and the error description.
-        XCTFail("Pending Wave 1 implementation")
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .connected }
+
+        spy.nextSendKeyError = URLError(.networkConnectionLost)
+        controller.send(.volUp)
+
+        // Wait for the failure to be logged.
+        try await waitFor {
+            controller.logEntries.last?.contains("send KEY_VOLUP failed:") == true
+        }
+        XCTAssertEqual(
+            controller.state,
+            .connected,
+            "send failures must not flip connection state"
+        )
+
+        controller.stop()
     }
 }

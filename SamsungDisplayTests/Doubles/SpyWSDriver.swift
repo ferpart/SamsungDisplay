@@ -2,24 +2,11 @@
 import Foundation
 import os
 
-// MARK: - Wave 1 placeholder (SamsungWSDriving)
-//
-// `NetworkPathObserving` now lives in production code
-// (`SamsungDisplay/Connection/NetworkPathObserver.swift`), so its Wave 0
-// placeholder has been removed.
-//
-// `SamsungWSDriving` is added to production code in Task 2 of 02-01-PLAN
-// (alongside `ConnectionController`). Until that lands, keep this placeholder
-// so SpyWSDriver compiles.
-//
-// TODO(02-01 Task 2): DELETE this `SamsungWSDriving` placeholder once
-// production declares it in `SamsungDisplay/Samsung/SamsungWSActor.swift`.
-
-protocol SamsungWSDriving: Sendable {
-    func connect(to ip: String, token: String?) async throws -> String
-    func sendKey(_ key: SamsungCommand.Key) async throws
-    func disconnect() async
-}
+// Both `SamsungWSDriving` and `NetworkPathObserving` now live in production
+// code (see `SamsungDisplay/Samsung/SamsungWSActor.swift` and
+// `SamsungDisplay/Connection/NetworkPathObserver.swift`). The Wave 0
+// placeholders have been removed; SpyWSDriver/FakePathObserver conform to
+// the real protocols via `@testable import SamsungDisplay` above.
 
 // MARK: - SpyWSDriver
 

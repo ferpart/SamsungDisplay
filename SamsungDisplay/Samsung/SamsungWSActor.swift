@@ -210,3 +210,19 @@ actor SamsungWSActor {
         logger.info("connecting to \(toLog, privacy: .public)")
     }
 }
+
+// MARK: - SamsungWSDriving
+
+/// Test seam for `ConnectionController` — production code uses
+/// `SamsungWSActor`; unit tests inject `SpyWSDriver`
+/// (`SamsungDisplayTests/Doubles/SpyWSDriver.swift`).
+///
+/// Declared at module scope so the test target can pick it up via
+/// `@testable import SamsungDisplay`.
+protocol SamsungWSDriving: Sendable {
+    func connect(to ip: String, token: String?) async throws -> String
+    func sendKey(_ key: SamsungCommand.Key) async throws
+    func disconnect() async
+}
+
+extension SamsungWSActor: SamsungWSDriving {}
