@@ -224,6 +224,68 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
+    // CONN-06 (gap closure): path-lost while .connected must trigger reconnect.
+    func test_pathLost_whileConnected_movesToConnecting() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .connected }
+        let baseline = spy.connectCalls.count
+
+        path.firePathLost()
+
+        try await waitFor(
+            { self.spy.connectCalls.count > baseline },
+            timeout: .milliseconds(500)
+        )
+
+        controller.stop()
+    }
+
+    // CONN-06 (gap closure): post-handshake receive error must trigger reconnect.
+    func test_receiveLoopError_whileConnected_triggersReconnect() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .connected }
+        let baseline = spy.connectCalls.count
+
+        spy.simulateClose(error: URLError(.networkConnectionLost))
+
+        try await waitFor(
+            { self.spy.connectCalls.count > baseline },
+            timeout: .milliseconds(1500)
+        )
+
+        controller.stop()
+    }
+
+    // CONN-06 (gap closure): heartbeat timeout (any waitForClose throw) must
+    // route through the same reconnect path. Covers the half-open socket
+    // failure mode (monitor power-off via NAT timeout).
+    func test_heartbeatTimeout_whileConnected_triggersReconnect() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .connected }
+        let baseline = spy.connectCalls.count
+
+        spy.simulateClose(error: URLError(.timedOut))
+
+        try await waitFor(
+            { self.spy.connectCalls.count > baseline },
+            timeout: .milliseconds(1500)
+        )
+
+        controller.stop()
+    }
+
     // VOL-04 (v1): a send failure logs but does NOT change connection state.
     func test_send_failure_doesNotChangeState() async throws {
         preferences.monitorIP = "192.168.1.10"
