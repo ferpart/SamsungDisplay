@@ -51,6 +51,7 @@ final class ConnectionController {
         self.tokens = tokens
         self.policy = policy
         self.pathObserver.onPathSatisfied = { [weak self] in self?.kickReconnect() }
+        self.pathObserver.onPathLost = { [weak self] in self?.handlePathLost() }
         self.pathObserver.start()
     }
 
@@ -142,6 +143,22 @@ final class ConnectionController {
         start(ip: ip)
     }
 
+    /// Called by `NetworkPathObserver` on `.unsatisfied` / `.requiresConnection`
+    /// / adapter-change transitions. Transition to `.connecting` immediately
+    /// (the icon flips to pulse) and restart the lifecycle task so the
+    /// parked `ws.waitForClose()` returns via CancellationError. The fresh
+    /// loop's first connect attempt will fail until the path is satisfied
+    /// again, which is exactly the desired UX: visible "Reconnecting…" in
+    /// the popover + backoff schedule visible in Settings → Logs.
+    private func handlePathLost() {
+        guard state != .unauthorized, state != .noIP else { return }
+        append("path lost")
+        state = .connecting
+        statusMessage = "Reconnecting…"
+        guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
+        start(ip: ip)
+    }
+
     /// The core exponential-backoff loop (RESEARCH.md Pattern 3). Re-reads the
     /// token from `TokenStore` on every iteration so wipe-token takes effect
     /// (RESEARCH.md Pitfall #4).
@@ -162,16 +179,20 @@ final class ConnectionController {
                 statusMessage = "Connected"
                 lastDelay = nil   // reset on success
                 append("connected")
-                // Wait until the driver disconnects (close/error). We
-                // approximate "still connected" by sleeping a long-ish poll
-                // interval; on cancel (start() re-called, path satisfied),
-                // we exit immediately via CancellationError.
+                // Park here until the driver detects a disconnect (server
+                // close, receive-loop error, application-level heartbeat
+                // timeout). Any throw surfaces as a connection loss and we
+                // fall through to the backoff sleep + retry. A clean return
+                // from `waitForClose()` is not part of the contract; if it
+                // happens we still retry.
                 do {
-                    while !Task.isCancelled {
-                        try await Task.sleep(for: .seconds(60))
-                    }
+                    try await ws.waitForClose()
+                    append("waitForClose returned cleanly — retrying")
+                } catch is CancellationError {
+                    return    // user action or path-lost cancelled us
                 } catch {
-                    return    // cancelled — outer start() owns the next loop
+                    append("connection lost: \(error)")
+                    // Fall through to the backoff + retry below
                 }
             } catch SamsungWSError.unauthorized {
                 state = .unauthorized
