@@ -16,6 +16,10 @@ import Network
 @MainActor
 protocol NetworkPathObserving: AnyObject {
     var onPathSatisfied: (@MainActor () -> Void)? { get set }
+    /// Fires when the path transitions to a non-satisfied status
+    /// (`.unsatisfied`, `.requiresConnection`, or adapter-change).
+    /// Wave 5 Plan 02-05 wires the production pathUpdateHandler.
+    var onPathLost: (@MainActor () -> Void)? { get set }
     func start()
     func stop()
 }
@@ -35,6 +39,7 @@ final class NetworkPathObserver: NetworkPathObserving {
     private let queue = DispatchQueue(label: "com.fp.SamsungDisplay.path", qos: .utility)
 
     var onPathSatisfied: (@MainActor () -> Void)?
+    var onPathLost: (@MainActor () -> Void)?
 
     func start() {
         monitor.pathUpdateHandler = { [weak self] path in

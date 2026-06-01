@@ -125,6 +125,14 @@ actor SamsungWSActor {
         logger.info("sent \(key.rawValue, privacy: .public)")
     }
 
+    /// STUB — Wave 5 Plan 02-06 replaces this with a real post-handshake
+    /// receive loop + application-level heartbeat. Throws immediately so
+    /// the RED tests in Plan 02-04 fail for the right reason (no liveness
+    /// signal) rather than failing to compile.
+    func waitForClose() async throws {
+        throw SamsungWSError.notConnected
+    }
+
     /// Tear down the WebSocket task, URLSession, and TLS delegate cleanly.
     /// Idempotent — safe to call when nothing is open.
     func disconnect() async {
@@ -223,6 +231,15 @@ protocol SamsungWSDriving: Sendable {
     func connect(to ip: String, token: String?) async throws -> String
     func sendKey(_ key: SamsungCommand.Key) async throws
     func disconnect() async
+    /// Suspends until the open WebSocket disconnects.
+    ///
+    /// Returns ONLY by throwing — server-side close, receive-loop error,
+    /// or application-level heartbeat timeout all surface as a thrown
+    /// error here. A clean return is not part of the contract.
+    ///
+    /// Must be called after a successful `connect(to:token:)` and at most
+    /// once per connect. Safe to call concurrently with `sendKey`.
+    func waitForClose() async throws -> Void
 }
 
 extension SamsungWSActor: SamsungWSDriving {}

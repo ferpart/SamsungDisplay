@@ -1,11 +1,14 @@
 @testable import SamsungDisplay
 
-// `NetworkPathObserving` is declared in SpyWSDriver.swift as a Wave 0
-// placeholder. Wave 1 will move it to production code (see TODO there).
+// `NetworkPathObserving` lives in production (see
+// `SamsungDisplay/Connection/NetworkPathObserver.swift`). FakePathObserver
+// conforms to the real protocol via `@testable import SamsungDisplay` and
+// exposes `firePathSatisfied()` / `firePathLost()` for controller tests.
 
 @MainActor
 final class FakePathObserver: NetworkPathObserving {
     var onPathSatisfied: (@MainActor () -> Void)?
+    var onPathLost: (@MainActor () -> Void)?
     private(set) var startCalled = false
     private(set) var stopCalled = false
 
@@ -16,5 +19,11 @@ final class FakePathObserver: NetworkPathObserving {
     /// .satisfied path transition.
     func firePathSatisfied() {
         onPathSatisfied?()
+    }
+
+    /// Test helper: fire the path-lost callback as if NWPathMonitor saw a
+    /// .unsatisfied / .requiresConnection / adapter-change transition.
+    func firePathLost() {
+        onPathLost?()
     }
 }

@@ -34,6 +34,7 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         var disconnectCalls: Int = 0
         var nextConnectOutcome: ConnectOutcome = .success(token: "spy-token")
         var nextSendKeyError: (any Error)? = nil
+        var pendingClose: CheckedContinuation<Void, any Error>? = nil
     }
 
     private let state = OSAllocatedUnfairLock<State>(initialState: State())
@@ -88,5 +89,32 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
 
     func disconnect() async {
         state.withLock { $0.disconnectCalls += 1 }
+    }
+
+    func waitForClose() async throws {
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, any Error>) in
+                state.withLock { $0.pendingClose = cont }
+            }
+        } onCancel: {
+            let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
+                let p = s.pendingClose
+                s.pendingClose = nil
+                return p
+            }
+            parked?.resume(throwing: CancellationError())
+        }
+    }
+
+    /// Test helper: complete the parked `waitForClose()` await with `error`.
+    /// Mirrors a real server-side close, receive-loop error, or
+    /// application-level heartbeat timeout.
+    func simulateClose(error: any Error) {
+        let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
+            let p = s.pendingClose
+            s.pendingClose = nil
+            return p
+        }
+        parked?.resume(throwing: error)
     }
 }
