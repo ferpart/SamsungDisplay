@@ -25,6 +25,8 @@
 		AF159A7226BFD86E380A14C5 /* SamsungDisplayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */; };
 		B302A51D0F831168A872077D /* ConnectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8211B918549A6E6A84C279E0 /* ConnectionController.swift */; };
 		B72AF365FB91B766CFB38260 /* ValidationHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751DED7E95DB2DAE187D7ED0 /* ValidationHarness.swift */; };
+		BA6595BA9E578EC4EF2F1999 /* SamsungWSActorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */; };
+		BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */; };
 		C30BE0819FB6C635668C042A /* ReconnectPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 989782F2F2744F85FB1FA4D6 /* ReconnectPolicy.swift */; };
 		C7A7938A5287F9886F792714 /* ConnectionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E0114E17D98833750F7BB7 /* ConnectionStateTests.swift */; };
 		D698B696AA2AEC1ACB4B4DBB /* SamsungDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80663A2A6ED85ED3FB0A5EDC /* SamsungDevice.swift */; };
@@ -50,9 +52,11 @@
 /* Begin PBXFileReference section */
 		07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungTLSDelegateTests.swift; sourceTree = "<group>"; };
 		22337E9C767D53CE15D49CCF /* SamsungDisplayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SamsungDisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungWSActorTests.swift; sourceTree = "<group>"; };
 		37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungCommandTests.swift; sourceTree = "<group>"; };
 		5671CFE904DED2F980B6FC4E /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
 		65E0114E17D98833750F7BB7 /* ConnectionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStateTests.swift; sourceTree = "<group>"; };
+		67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkPathObserverTests.swift; sourceTree = "<group>"; };
 		6A049CEE98D8AB72889D2C6D /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
 		6E248182471EBB60F54F76DF /* SamsungCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungCommand.swift; sourceTree = "<group>"; };
 		729EC6E8A244384538B2A0B2 /* PopoverContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverContent.swift; sourceTree = "<group>"; };
@@ -183,11 +187,13 @@
 				96279A8F121AFC8F609D5C48 /* ConnectionControllerTests.swift */,
 				65E0114E17D98833750F7BB7 /* ConnectionStateTests.swift */,
 				B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */,
+				67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */,
 				97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */,
 				9BA106FF43288C01EB340C37 /* SamsungAuthResponseTests.swift */,
 				37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */,
 				07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */,
 				AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */,
+				254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */,
 				889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */,
 			);
 			path = SamsungDisplayTests;
@@ -303,11 +309,13 @@
 				C7A7938A5287F9886F792714 /* ConnectionStateTests.swift in Sources */,
 				D7E3B19AAF9478FD384313A6 /* FakePathObserver.swift in Sources */,
 				0D230ED5037998C042604328 /* InfoPlistTests.swift in Sources */,
+				BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */,
 				E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */,
 				6F73D53567249FD61FA53AB6 /* SamsungAuthResponseTests.swift in Sources */,
 				E4D6BF2CC49FA46F8D0C6CAA /* SamsungCommandTests.swift in Sources */,
 				98F06DEC481892982440A582 /* SamsungTLSDelegateTests.swift in Sources */,
 				FE46D8A526BD582357A97313 /* SamsungURLTests.swift in Sources */,
+				BA6595BA9E578EC4EF2F1999 /* SamsungWSActorTests.swift in Sources */,
 				981E898055F6054FAB03988D /* SpyWSDriver.swift in Sources */,
 				ECBDFCD63E26D87466917654 /* TokenStoreTests.swift in Sources */,
 			);

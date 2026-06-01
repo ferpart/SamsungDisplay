@@ -24,6 +24,59 @@ protocol NetworkPathObserving: AnyObject {
     func stop()
 }
 
+/// Side-effect description from interpreting one NWPath update against
+/// the previous snapshot. Pure value type — no main-actor work, no I/O.
+/// `internal` so `NetworkPathObserverTests` can drive it directly.
+enum PathDispatch: Equatable {
+    case none
+    case satisfied
+    case lost
+    case adapterChanged
+}
+
+/// Minimal projection of NWPath consumed by the dispatch routine.
+/// Allows tests to run without standing up a real NWPathMonitor.
+struct PathSnapshot: Equatable {
+    let status: NWPath.Status
+    /// Stable fingerprint of `availableInterfaces` so adapter-change
+    /// transitions (Wi-Fi -> Ethernet, etc.) are detectable while the
+    /// overall status remains `.satisfied`.
+    let interfaceFingerprint: String
+
+    init(status: NWPath.Status, interfaceFingerprint: String) {
+        self.status = status
+        self.interfaceFingerprint = interfaceFingerprint
+    }
+
+    /// Build from a live NWPath. Fingerprint is name+type per interface,
+    /// joined; cheap and stable across identical interface sets.
+    init(_ path: NWPath) {
+        self.status = path.status
+        self.interfaceFingerprint = path.availableInterfaces
+            .map { "\($0.name)/\($0.type)" }
+            .sorted()
+            .joined(separator: ",")
+    }
+}
+
+/// Pure dispatch table — no main-actor work, no I/O.
+func networkPathDispatch(previous: PathSnapshot?, current: PathSnapshot) -> PathDispatch {
+    guard let previous else {
+        return current.status == .satisfied ? .satisfied : .lost
+    }
+    let wasSatisfied = previous.status == .satisfied
+    let isSatisfied  = current.status  == .satisfied
+    switch (wasSatisfied, isSatisfied) {
+    case (true, true):
+        return previous.interfaceFingerprint == current.interfaceFingerprint
+            ? .none
+            : .adapterChanged
+    case (true, false):  return .lost
+    case (false, true):  return .satisfied
+    case (false, false): return .none
+    }
+}
+
 /// Production `NetworkPathObserving` driven by `NWPathMonitor`.
 ///
 /// `02-RESEARCH.md` Pattern 4 + Pitfall #2: a single owned monitor on a
@@ -41,13 +94,33 @@ final class NetworkPathObserver: NetworkPathObserving {
     var onPathSatisfied: (@MainActor () -> Void)?
     var onPathLost: (@MainActor () -> Void)?
 
+    private var previous: PathSnapshot?
+
     func start() {
         monitor.pathUpdateHandler = { [weak self] path in
-            guard path.status == .satisfied else { return }
-            // The path-update handler runs on `queue`, not the main actor.
-            // Hop to MainActor before reading `onPathSatisfied`.
-            Task { @MainActor in
-                self?.onPathSatisfied?()
+            guard let self else { return }
+            let snapshot = PathSnapshot(path)
+            // pathUpdateHandler runs on `queue` (utility QoS), NOT main.
+            // Hop to MainActor before reading/writing `previous` and
+            // firing callbacks (both are MainActor-isolated).
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let outcome = networkPathDispatch(previous: self.previous, current: snapshot)
+                self.previous = snapshot
+                switch outcome {
+                case .none:
+                    break
+                case .satisfied:
+                    self.onPathSatisfied?()
+                case .lost:
+                    self.onPathLost?()
+                case .adapterChanged:
+                    // Treated by the controller as: disconnect signal
+                    // immediately followed by a kick-reconnect signal —
+                    // forces the WS task to restart on the new interface.
+                    self.onPathLost?()
+                    self.onPathSatisfied?()
+                }
             }
         }
         monitor.start(queue: queue)
@@ -58,5 +131,6 @@ final class NetworkPathObserver: NetworkPathObserving {
     /// torn down without ever starting).
     func stop() {
         monitor.cancel()
+        previous = nil
     }
 }
