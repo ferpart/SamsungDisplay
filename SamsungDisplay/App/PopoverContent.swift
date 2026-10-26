@@ -6,82 +6,88 @@ struct PopoverContent: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var controller: ConnectionController
 
-    private var isConnected: Bool { controller.state == .connected }
-
     var body: some View {
-        GlassEffectContainer(spacing: 12) {
-            VStack(spacing: 12) {
+        GlassEffectContainer(spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 header
                 switch controller.state {
-                case .noIP: setUpCard
-                case .unauthorized: recoveryCard
+                case .noIP: setUpSection
+                case .unauthorized: recoverySection
                 default: controls
                 }
-                footer
+                Divider().padding(.horizontal, 8)
+                VStack(spacing: 0) {
+                    MenuRow(title: "Settings…") { open("settings") }
+                    MenuRow(title: "Quit SamsungDisplay") { NSApp.terminate(nil) }
+                        .keyboardShortcut("q", modifiers: [.command])
+                }
             }
         }
-        .padding(14)
-        .frame(width: 300)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .frame(width: 290)
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "display").font(.title2)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline) {
+                monitorName
+                Spacer()
+                status
+            }
             VStack(alignment: .leading, spacing: 2) {
-                Text(controller.monitorName ?? "Samsung monitor").font(.headline)
-                HStack(spacing: 6) {
-                    if controller.state == .connecting {
-                        ProgressView().controlSize(.mini)
-                    } else {
-                        Circle().fill(statusColor).frame(width: 8, height: 8)
-                    }
-                    Text(statusText).font(.caption).foregroundStyle(.secondary)
-                }
+                monitorName
+                status
             }
-            Spacer()
         }
-        .glassCard()
+        .padding(.horizontal, 8)
     }
 
+    private var monitorName: some View {
+        Text(controller.monitorName ?? "Samsung monitor").font(.headline).lineLimit(1)
+    }
+
+    private var status: some View {
+        HStack(spacing: 5) {
+            if controller.state == .connecting {
+                ProgressView().controlSize(.mini)
+            } else {
+                Circle().fill(statusColor).frame(width: 7, height: 7)
+            }
+            Text(statusText).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
     private var controls: some View {
-        VStack(spacing: 12) {
-            SoundButtonRow(controller: controller).glassCard()
-            Button { open("remote") } label: {
-                Label("Remote", systemImage: "av.remote").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glass)
-            .glassCard()
-        }
+        SoundButtonRow(controller: controller)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+        Divider().padding(.horizontal, 8)
+        Text("Monitor").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.horizontal, 8)
+        MenuRow(title: "Remote", systemImage: "av.remote", showsChevron: true) { open("remote") }
     }
 
-    private var setUpCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private var setUpSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text("No monitor is set up yet.").font(.callout)
             Button("Set up your monitor…") { open("onboarding") }
                 .buttonStyle(.glassProminent)
         }
-        .glassCard()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 
-    private var recoveryCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private var recoverySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Your monitor rejected the app. On the monitor, open Settings → All Settings → Connections → Device Connect Manager → Device List → SamsungDisplay → Allow.")
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
             Button("Wipe token and reconnect") { controller.wipeTokenAndReconnect() }
                 .buttonStyle(.glassProminent)
         }
-        .glassCard()
-    }
-
-    private var footer: some View {
-        HStack {
-            Button("Settings…") { open("settings") }
-            Spacer()
-            Button("Quit") { NSApp.terminate(nil) }
-                .keyboardShortcut("q", modifiers: [.command])
-        }
-        .buttonStyle(.glass)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 
     private var statusText: String {
