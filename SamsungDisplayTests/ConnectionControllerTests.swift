@@ -389,6 +389,69 @@ final class ConnectionControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .noIP)
     }
 
+    func test_volumeKey_withUnchangedVolume_stopsReadingRendererVolume() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.volume == 20 }
+
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        let readsAfterFirstKey = lan.volumeReads
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(lan.volumeReads, readsAfterFirstKey)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_volumeKey_atLimit_keepsRendererVolume() async throws {
+        lan.volumeLevel = 100
+        let controller = try await connectedController()
+        try await waitFor { controller.volume == 100 }
+
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 100)
+
+        lan.volumeLevel = 0
+        await controller.sendAndRefresh(.volDown)
+        XCTAssertEqual(controller.volume, 0)
+        controller.stop()
+    }
+
+    func test_reconnect_trustsRendererVolumeAgain() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.volume == 20 }
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        controller.start(ip: "192.168.1.10")
+        try await waitFor { controller.volume == 20 }
+        controller.stop()
+    }
+
+    func test_muteKey_withUnchangedMute_stopsReadingRendererMute() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.isMuted == false }
+
+        await controller.sendAndRefresh(.mute)
+        XCTAssertNil(controller.isMuted)
+        XCTAssertEqual(controller.volume, 20)
+
+        let readsAfterFirstKey = lan.muteReads
+        await controller.sendAndRefresh(.mute)
+        XCTAssertEqual(lan.muteReads, readsAfterFirstKey)
+        controller.stop()
+    }
+
+    func test_muteKey_withChangedMute_keepsRendererMute() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.isMuted == false }
+
+        lan.muted = true
+        await controller.sendAndRefresh(.mute)
+        XCTAssertEqual(controller.isMuted, true)
+        controller.stop()
+    }
+
     func test_setVolume_clampsAndForwards() async throws {
         let controller = try await connectedController()
         controller.setVolume(140)

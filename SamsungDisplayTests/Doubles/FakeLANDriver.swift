@@ -10,6 +10,7 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         var volume: Int? = 20
         var isMuted = false
         var volumeReads = 0
+        var muteReads = 0
         var setVolumeCalls: [Int] = []
         var wakeCalls: [String] = []
     }
@@ -20,6 +21,11 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         get { state.withLock { $0.volume } }
         set { state.withLock { $0.volume = newValue } }
     }
+    var muted: Bool {
+        get { state.withLock { $0.isMuted } }
+        set { state.withLock { $0.isMuted = newValue } }
+    }
+    var muteReads: Int { state.withLock { $0.muteReads } }
     var volumeReads: Int { state.withLock { $0.volumeReads } }
     var setVolumeCalls: [Int] { state.withLock { $0.setVolumeCalls } }
     var wakeCalls: [String] { state.withLock { $0.wakeCalls } }
@@ -38,7 +44,10 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
     }
 
     func isMuted(host: String) async throws -> Bool {
-        state.withLock { $0.isMuted }
+        state.withLock {
+            $0.muteReads += 1
+            return $0.isMuted
+        }
     }
 
     func setVolume(_ level: Int, host: String) async throws {

@@ -39,6 +39,8 @@ final class ConnectionController {
     private let policy: ReconnectPolicy
 
     private var lifecycleTask: Task<Void, Never>?
+    private var readsVolume = true
+    private var readsMute = true
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
     private let logCap = 50
 
@@ -102,21 +104,39 @@ final class ConnectionController {
     }
 
     func sendAndRefresh(_ key: SamsungCommand.Key) async {
+        let volumeBefore = volume
+        let muteBefore = isMuted
         do {
             try await ws.sendKey(key)
-            if [.volUp, .volDown, .mute].contains(key), volume != nil {
-                await refreshVolume()
-            }
         } catch {
             append("send \(key.rawValue) failed: \(error)")
+            return
+        }
+        guard [.volUp, .volDown, .mute].contains(key), volume != nil || isMuted != nil else { return }
+        await refreshVolume()
+        switch key {
+        case .volUp where volumeBefore != 100, .volDown where volumeBefore != 0:
+            if let volumeBefore, volume == volumeBefore {
+                volume = nil
+                readsVolume = false
+                append("volume does not follow the keys — ignoring renderer volume")
+            }
+        case .mute:
+            if let muteBefore, isMuted == muteBefore {
+                isMuted = nil
+                readsMute = false
+                append("mute does not follow the key — ignoring renderer mute")
+            }
+        default:
+            break
         }
     }
 
     func refreshVolume() async {
         guard let ip = preferences.monitorIP else { return }
         do {
-            volume = try await lan.volume(host: ip)
-            isMuted = try await lan.isMuted(host: ip)
+            if readsVolume { volume = try await lan.volume(host: ip) }
+            if readsMute { isMuted = try await lan.isMuted(host: ip) }
         } catch {
             volume = nil
             isMuted = nil
@@ -261,6 +281,8 @@ final class ConnectionController {
                 }
                 state = .connected
                 statusMessage = "Connected"
+                readsVolume = true
+                readsMute = true
                 lastDelay = nil   // reset on success
                 append("connected")
                 Task { @MainActor [weak self] in await self?.loadMonitorDetails(ip: ip) }
