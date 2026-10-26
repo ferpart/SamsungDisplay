@@ -8,6 +8,8 @@ struct MediaKeyEvent: Equatable, Sendable {
     private static let auxControlButtonsSubtype: Int16 = 8
     private static let keyDownState = 0xA
 
+    var sendsKey: Bool { isDown && !(key == .mute && isRepeat) }
+
     init(key: SamsungCommand.Key, isDown: Bool, isRepeat: Bool) {
         self.key = key
         self.isDown = isDown

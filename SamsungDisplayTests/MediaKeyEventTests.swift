@@ -41,4 +41,12 @@ final class MediaKeyEventTests: XCTestCase {
         let cgEvent = try XCTUnwrap(nsEvent.cgEvent)
         XCTAssertEqual(MediaKeyEvent(cgEvent), MediaKeyEvent(key: .volUp, isDown: true, isRepeat: true))
     }
+
+    func test_sendsOnKeyDownAndVolumeRepeatOnly() {
+        XCTAssertTrue(MediaKeyEvent(key: .volUp, isDown: true, isRepeat: false).sendsKey)
+        XCTAssertTrue(MediaKeyEvent(key: .volDown, isDown: true, isRepeat: true).sendsKey)
+        XCTAssertTrue(MediaKeyEvent(key: .mute, isDown: true, isRepeat: false).sendsKey)
+        XCTAssertFalse(MediaKeyEvent(key: .mute, isDown: true, isRepeat: true).sendsKey)
+        XCTAssertFalse(MediaKeyEvent(key: .volUp, isDown: false, isRepeat: false).sendsKey)
+    }
 }
