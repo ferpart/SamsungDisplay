@@ -91,6 +91,7 @@
 		22337E9C767D53CE15D49CCF /* SamsungDisplayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SamsungDisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungWSActorTests.swift; sourceTree = "<group>"; };
 		25F13940D6F1094D9024EDC3 /* OSDContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSDContent.swift; sourceTree = "<group>"; };
+		2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		2D42E23E164A9FC5CD70966F /* AudioOutputDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputDevices.swift; sourceTree = "<group>"; };
 		3128A14FA2513DFB53AE0E87 /* SamsungDeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungDeviceInfo.swift; sourceTree = "<group>"; };
 		315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorPickerViews.swift; sourceTree = "<group>"; };
@@ -146,7 +147,6 @@
 		F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAP.swift; sourceTree = "<group>"; };
 		F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungLANClient.swift; sourceTree = "<group>"; };
 		F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SamsungDisplay.entitlements; sourceTree = "<group>"; };
-		"TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -249,6 +249,7 @@
 		BAF8D6D658094BE31C1AFD66 = {
 			isa = PBXGroup;
 			children = (
+				DE63763D88A570191853E2AD /* Config */,
 				AFD7898AC8999E10F418866D /* SamsungDisplay */,
 				E542D3074AB72DF15F405B8D /* SamsungDisplayTests */,
 				2557294EE08E29E6DD09E937 /* Products */,
@@ -280,6 +281,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		DE63763D88A570191853E2AD /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		E542D3074AB72DF15F405B8D /* SamsungDisplayTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -307,14 +316,6 @@
 				7F17A82B16D8C69E9758B58A /* WakeOnLANTests.swift */,
 			);
 			path = SamsungDisplayTests;
-			sourceTree = "<group>";
-		};
-		"TEMP_7EA664DA-73E5-4B8A-8D16-40D56184747E" /* SamsungDisplay-t3-ui */ = {
-			isa = PBXGroup;
-			children = (
-				"TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */,
-			);
-			path = "SamsungDisplay-t3-ui";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -483,6 +484,7 @@
 /* Begin XCBuildConfiguration section */
 		32F958415C4407E3A65D6FC6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -500,7 +502,7 @@
 		};
 		6BD75AACED84C19AD881E45E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */;
+			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
@@ -589,7 +591,7 @@
 		};
 		9D1CEEC0199CCFD6AF22BC98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */;
+			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
@@ -610,6 +612,7 @@
 		};
 		BBED8681C27EBF421F8D808D /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
