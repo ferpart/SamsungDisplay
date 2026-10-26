@@ -146,7 +146,7 @@
 		F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAP.swift; sourceTree = "<group>"; };
 		F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungLANClient.swift; sourceTree = "<group>"; };
 		F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SamsungDisplay.entitlements; sourceTree = "<group>"; };
-		"TEMP_0AC645C6-A0EA-4EEF-B786-9AFA85C37CC2" /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		"TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -309,10 +309,10 @@
 			path = SamsungDisplayTests;
 			sourceTree = "<group>";
 		};
-		"TEMP_26048236-3E32-4875-BDB3-C5E7776D2C2E" /* SamsungDisplay-t3-ui */ = {
+		"TEMP_7EA664DA-73E5-4B8A-8D16-40D56184747E" /* SamsungDisplay-t3-ui */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_0AC645C6-A0EA-4EEF-B786-9AFA85C37CC2" /* Signing.xcconfig */,
+				"TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */,
 			);
 			path = "SamsungDisplay-t3-ui";
 			sourceTree = "<group>";
@@ -500,7 +500,7 @@
 		};
 		6BD75AACED84C19AD881E45E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0AC645C6-A0EA-4EEF-B786-9AFA85C37CC2" /* Signing.xcconfig */;
+			baseConfigurationReference = "TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
@@ -589,7 +589,7 @@
 		};
 		9D1CEEC0199CCFD6AF22BC98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0AC645C6-A0EA-4EEF-B786-9AFA85C37CC2" /* Signing.xcconfig */;
+			baseConfigurationReference = "TEMP_F4937FD3-97D3-467F-8E25-92405DCACCEA" /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
