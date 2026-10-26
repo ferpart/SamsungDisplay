@@ -24,6 +24,7 @@ struct AppPreferences: @unchecked Sendable {
     private enum Key {
         static let monitorIP = "monitorIP"
         static let monitorMAC = "monitorMAC"
+        static let audioOutputName = "audioOutputName"
     }
 
     var monitorIP: String? {
@@ -46,6 +47,17 @@ struct AppPreferences: @unchecked Sendable {
                 defaults.set(newValue, forKey: Key.monitorMAC)
             } else {
                 defaults.removeObject(forKey: Key.monitorMAC)
+            }
+        }
+    }
+
+    var audioOutputName: String? {
+        get { defaults.string(forKey: Key.audioOutputName) }
+        nonmutating set {
+            if let newValue {
+                defaults.set(newValue, forKey: Key.audioOutputName)
+            } else {
+                defaults.removeObject(forKey: Key.audioOutputName)
             }
         }
     }
