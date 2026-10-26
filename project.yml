@@ -6,6 +6,8 @@ options:
   createIntermediateGroups: true
   generateEmptyDirectories: true
   groupSortPosition: top
+fileGroups:
+  - Config/Signing.xcconfig
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -21,6 +23,9 @@ targets:
     platform: macOS
     sources:
       - path: SamsungDisplay
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fp.SamsungDisplay
@@ -41,6 +46,9 @@ targets:
     platform: macOS
     sources:
       - path: SamsungDisplayTests
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     dependencies:
       - target: SamsungDisplay
     settings:

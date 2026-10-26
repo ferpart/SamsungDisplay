@@ -326,12 +326,12 @@ final class ConnectionControllerTests: XCTestCase {
         return controller
     }
 
-    func test_connect_loadsVolumeMuteAndStoresMAC() async throws {
+    private func settledController() async throws -> ConnectionController {
         let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-        XCTAssertEqual(controller.isMuted, false)
-        XCTAssertEqual(preferences.monitorMAC, "02:00:00:00:00:01")
-        controller.stop()
+        try await waitFor { self.preferences.monitorMAC != nil }
+        await controller.refreshVolume()
+        try await Task.sleep(for: .milliseconds(50))
+        return controller
     }
 
     func test_connect_withoutRenderer_leavesVolumeNil() async throws {
@@ -347,46 +347,225 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
-    func test_volumeKey_refreshesVolume() async throws {
+    func test_connect_storesMonitorName() async throws {
         let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-
-        lan.volumeLevel = 21
-        controller.send(.volUp)
-        try await waitFor { controller.volume == 21 }
+        try await waitFor { controller.monitorName == "OLED G9" }
         controller.stop()
     }
 
-    func test_setVolume_clampsAndForwards() async throws {
+    func test_connectTo_storesIPAndConnects() async throws {
+        spy.nextConnectOutcome = .success(token: "t")
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertEqual(preferences.monitorIP, "192.168.1.77")
+        controller.stop()
+    }
+
+    func test_forgetMonitor_clearsIPAndReturnsToNoIP() async throws {
         let controller = try await connectedController()
+        controller.forgetMonitor()
+        XCTAssertNil(preferences.monitorIP)
+        XCTAssertEqual(controller.state, .noIP)
+    }
+
+    func test_connect_storesMAC_andHidesUnprovenVolumeAndMute() async throws {
+        let controller = try await settledController()
+        XCTAssertEqual(preferences.monitorMAC, "02:00:00:00:00:01")
+        XCTAssertNil(controller.volume)
+        XCTAssertNil(controller.isMuted)
+        controller.stop()
+    }
+
+    func test_volumeKey_movingVolumeByOne_trustsVolume() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
+
+        lan.volumeLevel = 20
+        await controller.sendAndRefresh(.volDown)
+        XCTAssertEqual(controller.volume, 20)
+        controller.stop()
+    }
+
+    func test_volumeKey_unchangedVolume_staysHidden() async throws {
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_volumeKey_movingVolumeInWrongDirectionOrByMoreThanOne_staysHidden() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 19
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        lan.volumeLevel = 25
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_volumeKey_atLimits_provesTheRendererOnlyWhenItMovesInward() async throws {
+        lan.volumeLevel = 100
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        lan.volumeLevel = 99
+        await controller.sendAndRefresh(.volDown)
+        XCTAssertEqual(controller.volume, 99)
+        controller.stop()
+    }
+
+    func test_muteKey_flippingMute_trustsMute() async throws {
+        let controller = try await settledController()
+        lan.muted = true
+        await controller.sendAndRefresh(.mute)
+        XCTAssertEqual(controller.isMuted, true)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_muteKey_unchangedMute_staysHidden() async throws {
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.mute)
+        XCTAssertNil(controller.isMuted)
+        controller.stop()
+    }
+
+    func test_reconnect_forgetsTrust() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
+
+        controller.start(ip: "192.168.1.10")
+        try await waitFor { controller.volume == nil && controller.state == .connected }
+        controller.stop()
+    }
+
+    func test_setVolume_trustedRenderer_forwardsClampedLevel() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+
         controller.setVolume(140)
         try await waitFor { controller.volume == 100 }
         XCTAssertEqual(lan.setVolumeCalls, [100])
         controller.stop()
     }
 
-    func test_powerOn_sendsWakeToStoredMAC() async throws {
-        preferences.monitorMAC = "02:00:00:00:00:01"
-        let controller = makeController()
-        controller.powerOn()
-        try await waitFor { self.lan.wakeCalls == ["02:00:00:00:00:01"] }
+    func test_setVolumeFailure_stopsTrustingVolumeForTheConnection() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
+
+        lan.setVolumeFails = true
+        controller.setVolume(50)
+        try await waitFor { controller.volume == nil }
+
+        lan.volumeLevel = 22
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+        controller.stop()
     }
 
-    func test_powerOn_withoutMAC_logsAndSkips() {
+    func test_powerOn_whenAPIAnswersStandby_sendsPowerKeyOverWebSocket() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        XCTAssertTrue(lan.wakeCalls.isEmpty)
+        XCTAssertEqual(controller.powerState, .standby)
+        controller.stop()
+    }
+
+    func test_powerOn_whenAPIAnswersOn_doesNothing() async throws {
+        let controller = try await connectedController()
+        await controller.changePower(toOn: true)
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+        XCTAssertTrue(lan.wakeCalls.isEmpty)
+        controller.stop()
+    }
+
+    func test_powerOn_whenAPIDoesNotAnswer_sendsWakeOnLANToStoredMAC() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        preferences.monitorMAC = "02:00:00:00:00:01"
+        lan.deviceInfoFails = true
         let controller = makeController()
-        controller.powerOn()
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(lan.wakeCalls, ["02:00:00:00:00:01"])
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+        XCTAssertEqual(controller.powerState, .off)
+    }
+
+    func test_powerOn_whenAPIDoesNotAnswerAndNoMAC_logsAndSkips() async {
+        lan.deviceInfoFails = true
+        let controller = makeController()
+        await controller.changePower(toOn: true)
         XCTAssertTrue(controller.logEntries.last?.contains("no MAC stored") == true)
         XCTAssertTrue(lan.wakeCalls.isEmpty)
     }
 
-    func test_powerOffAndInputs_sendExpectedKeys() async throws {
+    func test_powerOn_inStandbyWhileDisconnected_reconnectsThenSendsPowerKey() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+        lan.powerState = "standby"
+        let controller = makeController()
+        XCTAssertNotEqual(controller.state, .connected)
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(controller.state, .connected)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        controller.stop()
+    }
+
+    func test_powerOff_onlySendsPowerKeyWhenOn() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        await controller.changePower(toOn: false)
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+
+        lan.powerState = "on"
+        await controller.changePower(toOn: false)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        controller.stop()
+    }
+
+    func test_refreshPowerState_publishesOnStandbyAndOff() async throws {
+        let controller = makeController()
+        preferences.monitorIP = "192.168.1.10"
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .on)
+        lan.powerState = "standby"
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .standby)
+        lan.deviceInfoFails = true
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .off)
+    }
+
+    func test_standby_connectionLostThenMonitorAcceptsSocket_reconnects() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        let baseline = spy.connectCalls.count
+
+        spy.simulateClose(error: URLError(.networkConnectionLost))
+        try await waitFor({ self.spy.connectCalls.count > baseline && controller.state == .connected },
+                          timeout: .milliseconds(2500))
+        controller.stop()
+    }
+
+    func test_powerOffInputsAndPad_sendExpectedKeys() async throws {
         let controller = try await connectedController()
         controller.powerOff()
         controller.openInputSourceMenu()
-        controller.selectHDMI(2)
-        controller.selectHDMI(9)
+        controller.nextHDMIInput()
         try await waitFor { self.spy.sendKeyCalls.count == 3 }
-        XCTAssertEqual(Set(spy.sendKeyCalls), [.power, .source, .hdmi2])
+        XCTAssertEqual(Set(spy.sendKeyCalls), [.power, .source, .hdmi])
         controller.stop()
     }
 }

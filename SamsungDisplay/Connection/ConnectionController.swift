@@ -28,6 +28,8 @@ final class ConnectionController {
     private(set) var logEntries: [String] = []
     private(set) var volume: Int?
     private(set) var isMuted: Bool?
+    private(set) var monitorName: String?
+    private(set) var powerState: PowerState?
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
@@ -38,6 +40,11 @@ final class ConnectionController {
     private let policy: ReconnectPolicy
 
     private var lifecycleTask: Task<Void, Never>?
+    @ObservationIgnored private var rawVolume: Int?
+    @ObservationIgnored private var rawMuted: Bool?
+    @ObservationIgnored private var volumeTrusted = false
+    @ObservationIgnored private var muteTrusted = false
+    @ObservationIgnored private var volumeDisproved = false
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
     private let logCap = 50
 
@@ -96,28 +103,40 @@ final class ConnectionController {
     /// sends do not redefine our connection truth.
     func send(_ key: SamsungCommand.Key) {
         Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await self.ws.sendKey(key)
-                if [.volUp, .volDown, .mute].contains(key), self.volume != nil {
-                    await self.refreshVolume()
-                }
-            } catch {
-                self.append("send \(key.rawValue) failed: \(error)")
-            }
+            await self?.sendAndRefresh(key)
+        }
+    }
+
+    func sendAndRefresh(_ key: SamsungCommand.Key) async {
+        let volumeBefore = rawVolume
+        let muteBefore = rawMuted
+        do {
+            try await ws.sendKey(key)
+        } catch {
+            append("send \(key.rawValue) failed: \(error)")
+            return
+        }
+        guard [.volUp, .volDown, .mute].contains(key), rawVolume != nil || rawMuted != nil else { return }
+        await refreshVolume()
+        switch key {
+        case .volUp: trustVolumeIfMoved(by: 1, from: volumeBefore)
+        case .volDown: trustVolumeIfMoved(by: -1, from: volumeBefore)
+        case .mute: trustMuteIfFlipped(from: muteBefore)
+        default: break
         }
     }
 
     func refreshVolume() async {
         guard let ip = preferences.monitorIP else { return }
         do {
-            volume = try await lan.volume(host: ip)
-            isMuted = try await lan.isMuted(host: ip)
+            rawVolume = try await lan.volume(host: ip)
+            rawMuted = try await lan.isMuted(host: ip)
         } catch {
-            volume = nil
-            isMuted = nil
+            rawVolume = nil
+            rawMuted = nil
             append("volume read failed: \(error)")
         }
+        publishRendererState()
     }
 
     func setVolume(_ level: Int) {
@@ -127,34 +146,83 @@ final class ConnectionController {
             guard let self else { return }
             do {
                 try await self.lan.setVolume(clamped, host: ip)
-                self.volume = clamped
+                self.rawVolume = clamped
             } catch {
+                self.volumeTrusted = false
+                self.volumeDisproved = true
                 self.append("set volume failed: \(error)")
             }
+            self.publishRendererState()
         }
     }
 
-    // KEY_POWER toggles the power state.
-    func powerOff() {
-        send(.power)
+    func powerOn() {
+        Task { @MainActor [weak self] in await self?.changePower(toOn: true) }
     }
 
-    func powerOn() {
+    func powerOff() {
+        Task { @MainActor [weak self] in await self?.changePower(toOn: false) }
+    }
+
+    func togglePower() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.changePower(toOn: await self.readPowerState() != .on)
+        }
+    }
+
+    func refreshPowerState() async {
+        _ = await readPowerState()
+    }
+
+    func changePower(toOn: Bool) async {
+        switch (toOn, await readPowerState()) {
+        case (true, .on), (false, .standby), (false, .off): return
+        case (false, .on): await sendAndRefresh(.power)
+        case (true, .standby): await sendPowerKeyWhenConnected()
+        case (true, .off): await wakeOnLAN()
+        }
+    }
+
+    private func readPowerState() async -> PowerState {
+        guard let ip = preferences.monitorIP else { return .off }
+        let current: PowerState
+        do {
+            current = PowerState(apiValue: try await lan.deviceInfo(host: ip).powerState)
+        } catch {
+            current = .off
+        }
+        powerState = current
+        return current
+    }
+
+    private func sendPowerKeyWhenConnected() async {
+        if state != .connected, let ip = preferences.monitorIP {
+            start(ip: ip)
+            for _ in 0..<50 where state != .connected {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        guard state == .connected else {
+            append("power on skipped: not connected")
+            return
+        }
+        await sendAndRefresh(.power)
+    }
+
+    private func wakeOnLAN() async {
         guard let mac = preferences.monitorMAC else {
             append("power on skipped: no MAC stored")
             return
         }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await self.lan.wake(mac: mac)
-                self.append("wake-on-LAN sent")
-                if self.state != .connected, let ip = self.preferences.monitorIP {
-                    self.start(ip: ip)
-                }
-            } catch {
-                self.append("wake-on-LAN failed: \(error)")
+        do {
+            try await lan.wake(mac: mac)
+            append("wake-on-LAN sent")
+            if state != .connected, let ip = preferences.monitorIP {
+                start(ip: ip)
             }
+        } catch {
+            append("wake-on-LAN failed: \(error)")
         }
     }
 
@@ -162,9 +230,21 @@ final class ConnectionController {
         send(.source)
     }
 
-    func selectHDMI(_ port: Int) {
-        guard let key = SamsungCommand.Key(rawValue: "KEY_HDMI\(port)") else { return }
-        send(key)
+    func nextHDMIInput() {
+        send(.hdmi)
+    }
+
+    func connect(to ip: String) {
+        preferences.monitorIP = ip
+        start(ip: ip)
+    }
+
+    func forgetMonitor() {
+        lifecycleTask?.cancel()
+        lifecycleTask = nil
+        preferences.monitorIP = nil
+        state = .noIP
+        statusMessage = "Not connected — set monitor IP in Settings"
     }
 
     /// Sticky-deny recovery: drop the keychain token, then restart the loop.
@@ -244,6 +324,7 @@ final class ConnectionController {
                 }
                 state = .connected
                 statusMessage = "Connected"
+                resetRendererTrust()
                 lastDelay = nil   // reset on success
                 append("connected")
                 Task { @MainActor [weak self] in await self?.loadMonitorDetails(ip: ip) }
@@ -280,9 +361,38 @@ final class ConnectionController {
         }
     }
 
+    private func trustVolumeIfMoved(by step: Int, from before: Int?) {
+        guard !volumeDisproved, let before, let current = rawVolume, current - before == step else { return }
+        volumeTrusted = true
+        publishRendererState()
+    }
+
+    private func trustMuteIfFlipped(from before: Bool?) {
+        guard let before, let current = rawMuted, current != before else { return }
+        muteTrusted = true
+        publishRendererState()
+    }
+
+    private func publishRendererState() {
+        volume = volumeTrusted ? rawVolume : nil
+        isMuted = muteTrusted ? rawMuted : nil
+    }
+
+    private func resetRendererTrust() {
+        rawVolume = nil
+        rawMuted = nil
+        volumeTrusted = false
+        muteTrusted = false
+        volumeDisproved = false
+        publishRendererState()
+    }
+
     private func loadMonitorDetails(ip: String) async {
         do {
-            preferences.monitorMAC = try await lan.deviceInfo(host: ip).wifiMac
+            let info = try await lan.deviceInfo(host: ip)
+            preferences.monitorMAC = info.wifiMac
+            monitorName = info.name
+            powerState = PowerState(apiValue: info.powerState)
         } catch {
             append("device info failed: \(error)")
         }

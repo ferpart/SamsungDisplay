@@ -1,73 +1,121 @@
 import SwiftUI
 
-/// Settings window content. Phase 2 minimal set; Phase 3 will extend.
-///
-/// Contents:
-///   * Monitor IP text field — bound to a local @State string mirrored to
-///     AppPreferences.shared.monitorIP on submit/blur. On a non-empty commit,
-///     controller.start(ip:) is called so the new IP takes effect immediately.
-///   * Wipe Token and Re-pair button — same code path as the popover's
-///     sticky-deny recovery (`controller.wipeTokenAndReconnect()`).
-///   * Logs — scrollable list of controller.logEntries, auto-scrolls to the
-///     newest line via ScrollViewReader.
 struct SettingsView: View {
     @Bindable var controller: ConnectionController
-    @State private var ipDraft: String = ""
+    @Bindable var permission: MediaKeyPermission
+    var preferences: AppPreferences = .shared
+    @State private var discovery = MonitorDiscovery()
+    @State private var ipDraft = ""
+    @State private var audioOutputName: String?
+    @State private var audioOutputs: [String] = []
+    @State private var launchAtLogin = false
+    @State private var launchAtLoginError: String?
 
     var body: some View {
-        Form {
-            Section("Monitor") {
-                TextField("Monitor IP", text: $ipDraft, prompt: Text("e.g. 192.168.1.10"))
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { commitIP() }
-                Button("Save and reconnect") { commitIP() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(ipDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-
-            Section("Pairing") {
-                Button("Wipe token and re-pair") {
-                    controller.wipeTokenAndReconnect()
+        ScrollView {
+            GlassEffectContainer(spacing: 16) {
+                VStack(spacing: 16) {
+                    monitorCard
+                    audioCard
+                    startupCard
+                    permissionsCard
+                    logsCard
                 }
-                Text("Forgets the saved Samsung pairing token and re-triggers the pairing popup on your TV.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
-
-            Section("Logs") {
-                logs
-            }
+            .padding(20)
         }
-        .formStyle(.grouped)
-        .frame(minWidth: 420, minHeight: 360)
-        .onAppear { ipDraft = AppPreferences.shared.monitorIP ?? "" }
+        .frame(minWidth: 480, idealWidth: 520, minHeight: 520, idealHeight: 700)
+        .glassWindowBackground()
+        .onAppear(perform: load)
     }
 
-    private var logs: some View {
-        ScrollViewReader { proxy in
+    private var monitorCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Monitor").font(.headline)
+            ManualIPField(draft: $ipDraft, buttonTitle: "Save and reconnect") { controller.connect(to: $0) }
+            DiscoveredMonitorsView(discovery: discovery) { monitor in
+                ipDraft = monitor.ip
+                controller.connect(to: monitor.ip)
+            }
+            Divider()
+            Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
+                .buttonStyle(.glass)
+            Text("Forgets the saved pairing token. The monitor then asks you to select Allow again.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .glassCard()
+    }
+
+    private var audioCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Volume keys").font(.headline)
+            Picker("Audio output", selection: $audioOutputName) {
+                Text("Same name as a connected display").tag(String?.none)
+                ForEach(audioOutputs, id: \.self) { Text($0).tag(String?.some($0)) }
+            }
+            .onChange(of: audioOutputName) { _, name in preferences.audioOutputName = name }
+            Text("The keys control the monitor only when this output is the macOS output device.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .glassCard()
+    }
+
+    private var startupCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Toggle("Launch at login", isOn: launchAtLoginBinding)
+            if let launchAtLoginError {
+                Text(launchAtLoginError).font(.caption).foregroundStyle(.red)
+            }
+        }
+        .glassCard()
+    }
+
+    private var permissionsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Permissions").font(.headline)
+            PermissionsView(permission: permission)
+        }
+        .glassCard()
+    }
+
+    private var logsCard: some View {
+        DisclosureGroup("Logs") {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(controller.logEntries.enumerated()), id: \.offset) { idx, line in
+                    ForEach(Array(controller.logEntries.enumerated()), id: \.offset) { _, line in
                         Text(line)
                             .font(.system(.caption, design: .monospaced))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(idx)
                     }
                 }
-                .padding(.vertical, 4)
             }
-            .frame(minHeight: 160, maxHeight: 240)
-            .onChange(of: controller.logEntries.count) { _, newCount in
-                guard newCount > 0 else { return }
-                withAnimation { proxy.scrollTo(newCount - 1, anchor: .bottom) }
-            }
+            .frame(height: 160)
         }
+        .glassCard()
     }
 
-    private func commitIP() {
-        let trimmed = ipDraft.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        AppPreferences.shared.monitorIP = trimmed
-        controller.start(ip: trimmed)
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLogin },
+            set: { enabled in
+                do {
+                    try LaunchAtLogin.set(enabled)
+                    launchAtLoginError = nil
+                } catch {
+                    launchAtLoginError = "Could not change launch at login: \(error.localizedDescription)"
+                }
+                launchAtLogin = LaunchAtLogin.isEnabled
+            }
+        )
+    }
+
+    private func load() {
+        ipDraft = preferences.monitorIP ?? ""
+        audioOutputName = preferences.audioOutputName
+        audioOutputs = AudioOutputDevices.names()
+        if let audioOutputName, !audioOutputs.contains(audioOutputName) { audioOutputs.append(audioOutputName) }
+        launchAtLogin = LaunchAtLogin.isEnabled
     }
 }

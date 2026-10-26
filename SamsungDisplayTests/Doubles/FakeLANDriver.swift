@@ -10,6 +10,9 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         var volume: Int? = 20
         var isMuted = false
         var volumeReads = 0
+        var setVolumeFails = false
+        var deviceInfoFails = false
+        var muteReads = 0
         var setVolumeCalls: [Int] = []
         var wakeCalls: [String] = []
     }
@@ -20,12 +23,37 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         get { state.withLock { $0.volume } }
         set { state.withLock { $0.volume = newValue } }
     }
+    var muted: Bool {
+        get { state.withLock { $0.isMuted } }
+        set { state.withLock { $0.isMuted = newValue } }
+    }
+    var setVolumeFails: Bool {
+        get { state.withLock { $0.setVolumeFails } }
+        set { state.withLock { $0.setVolumeFails = newValue } }
+    }
+    var deviceInfoFails: Bool {
+        get { state.withLock { $0.deviceInfoFails } }
+        set { state.withLock { $0.deviceInfoFails = newValue } }
+    }
+    var powerState: String? {
+        get { state.withLock { $0.info.powerState } }
+        set {
+            state.withLock {
+                let info = $0.info
+                $0.info = SamsungDeviceInfo(ip: info.ip, name: info.name, modelName: info.modelName,
+                                            wifiMac: info.wifiMac, powerState: newValue)
+            }
+        }
+    }
+    var muteReads: Int { state.withLock { $0.muteReads } }
     var volumeReads: Int { state.withLock { $0.volumeReads } }
     var setVolumeCalls: [Int] { state.withLock { $0.setVolumeCalls } }
     var wakeCalls: [String] { state.withLock { $0.wakeCalls } }
 
     func deviceInfo(host: String) async throws -> SamsungDeviceInfo {
-        state.withLock { $0.info }
+        let (info, fails) = state.withLock { ($0.info, $0.deviceInfoFails) }
+        if fails { throw SamsungLANError.badResponse }
+        return info
     }
 
     func volume(host: String) async throws -> Int {
@@ -38,14 +66,19 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
     }
 
     func isMuted(host: String) async throws -> Bool {
-        state.withLock { $0.isMuted }
+        state.withLock {
+            $0.muteReads += 1
+            return $0.isMuted
+        }
     }
 
     func setVolume(_ level: Int, host: String) async throws {
-        state.withLock {
-            $0.setVolumeCalls.append(level)
-            $0.volume = level
+        let fails = state.withLock { s -> Bool in
+            s.setVolumeCalls.append(level)
+            if !s.setVolumeFails { s.volume = level }
+            return s.setVolumeFails
         }
+        if fails { throw SamsungLANError.badResponse }
     }
 
     func wake(mac: String) async throws {

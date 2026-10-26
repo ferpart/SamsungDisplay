@@ -34,10 +34,14 @@ struct SamsungCommand: Codable, Sendable {
         case mute = "KEY_MUTE"
         case power = "KEY_POWER"
         case source = "KEY_SOURCE"
-        case hdmi1 = "KEY_HDMI1"
-        case hdmi2 = "KEY_HDMI2"
-        case hdmi3 = "KEY_HDMI3"
-        case hdmi4 = "KEY_HDMI4"
+        case hdmi = "KEY_HDMI"
+        case up = "KEY_UP"
+        case down = "KEY_DOWN"
+        case left = "KEY_LEFT"
+        case right = "KEY_RIGHT"
+        case enter = "KEY_ENTER"
+        case back = "KEY_RETURN"
+        case home = "KEY_HOME"
     }
 
     /// Build a `Click`-typed command for a single remote key.

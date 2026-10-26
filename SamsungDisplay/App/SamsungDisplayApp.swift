@@ -12,10 +12,28 @@ struct SamsungDisplayApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Settings", id: "settings") {
-            SettingsView(controller: appDelegate.controller)
+            SettingsView(controller: appDelegate.controller, permission: appDelegate.volumeKeys.permission)
         }
-        .defaultSize(width: 480, height: 420)
+        .windowResizability(.contentMinSize)
+
+        Window("Remote", id: "remote") {
+            RemoteView(controller: appDelegate.controller)
+        }
         .windowResizability(.contentSize)
+
+        Window("Set up SamsungDisplay", id: "onboarding") {
+            OnboardingView(controller: appDelegate.controller, permission: appDelegate.volumeKeys.permission)
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(AppLaunch.needsOnboarding ? .presented : .suppressed)
+    }
+}
+
+enum AppLaunch {
+    static var isRunningTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }
+
+    static var needsOnboarding: Bool {
+        !isRunningTests && (AppPreferences.shared.monitorIP ?? "").isEmpty
     }
 }
 
@@ -26,7 +44,7 @@ final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // The unit tests use this app as their host and must not reach the real monitor.
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        guard !AppLaunch.isRunningTests else { return }
         controller.bootstrap()
         volumeKeys.start()
     }

@@ -16,3 +16,6 @@ Package.resolved
 CLAUDE.local.md
 settings.local.json
 .claude/CLAUDE.local.md
+
+# Local signing
+Signing.local.xcconfig

@@ -22,7 +22,7 @@ final class DefaultOutputObserver {
         }
     }
 
-    private static func readDefaultOutput() -> AudioOutputDevice? {
+    static func readDefaultOutput() -> AudioOutputDevice? {
         var deviceID = AudioObjectID(kAudioObjectUnknown)
         guard read(kAudioHardwarePropertyDefaultOutputDevice, of: AudioObjectID(kAudioObjectSystemObject), into: &deviceID),
               deviceID != kAudioObjectUnknown else { return nil }
@@ -35,7 +35,7 @@ final class DefaultOutputObserver {
         return AudioOutputDevice(name: name.takeRetainedValue() as String, transportType: transportType)
     }
 
-    private static func read<Value>(_ selector: AudioObjectPropertySelector, of object: AudioObjectID, into value: inout Value) -> Bool {
+    static func read<Value>(_ selector: AudioObjectPropertySelector, of object: AudioObjectID, into value: inout Value) -> Bool {
         var address = AudioObjectPropertyAddress(
             mSelector: selector,
             mScope: kAudioObjectPropertyScopeGlobal,

@@ -1,0 +1,3 @@
+// Copy this file to Signing.local.xcconfig and remove the comment marks.
+// DEVELOPMENT_TEAM = ABCDE12345
+// CODE_SIGN_IDENTITY = Apple Development
