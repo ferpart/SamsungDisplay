@@ -26,9 +26,12 @@ final class ConnectionController {
     private(set) var state: ConnectionState = .noIP
     private(set) var statusMessage: String = "Not connected"
     private(set) var logEntries: [String] = []
+    private(set) var volume: Int?
+    private(set) var isMuted: Bool?
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
+    private let lan: any SamsungLANDriving
     private let pathObserver: any NetworkPathObserving
     private let preferences: AppPreferences
     private let tokens: TokenStore
@@ -40,12 +43,14 @@ final class ConnectionController {
 
     init(
         ws: any SamsungWSDriving = SamsungWSActor(),
+        lan: any SamsungLANDriving = SamsungLANClient(),
         pathObserver: any NetworkPathObserving = NetworkPathObserver(),
         preferences: AppPreferences = .shared,
         tokens: TokenStore = .shared,
         policy: ReconnectPolicy = .default
     ) {
         self.ws = ws
+        self.lan = lan
         self.pathObserver = pathObserver
         self.preferences = preferences
         self.tokens = tokens
@@ -94,10 +99,72 @@ final class ConnectionController {
             guard let self else { return }
             do {
                 try await self.ws.sendKey(key)
+                if [.volUp, .volDown, .mute].contains(key), self.volume != nil {
+                    await self.refreshVolume()
+                }
             } catch {
                 self.append("send \(key.rawValue) failed: \(error)")
             }
         }
+    }
+
+    func refreshVolume() async {
+        guard let ip = preferences.monitorIP else { return }
+        do {
+            volume = try await lan.volume(host: ip)
+            isMuted = try await lan.isMuted(host: ip)
+        } catch {
+            volume = nil
+            isMuted = nil
+            append("volume read failed: \(error)")
+        }
+    }
+
+    func setVolume(_ level: Int) {
+        guard let ip = preferences.monitorIP else { return }
+        let clamped = min(max(level, 0), 100)
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await self.lan.setVolume(clamped, host: ip)
+                self.volume = clamped
+            } catch {
+                self.append("set volume failed: \(error)")
+            }
+        }
+    }
+
+    // KEY_POWER toggles the power state.
+    func powerOff() {
+        send(.power)
+    }
+
+    func powerOn() {
+        guard let mac = preferences.monitorMAC else {
+            append("power on skipped: no MAC stored")
+            return
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await self.lan.wake(mac: mac)
+                self.append("wake-on-LAN sent")
+                if self.state != .connected, let ip = self.preferences.monitorIP {
+                    self.start(ip: ip)
+                }
+            } catch {
+                self.append("wake-on-LAN failed: \(error)")
+            }
+        }
+    }
+
+    func openInputSourceMenu() {
+        send(.source)
+    }
+
+    func selectHDMI(_ port: Int) {
+        guard let key = SamsungCommand.Key(rawValue: "KEY_HDMI\(port)") else { return }
+        send(key)
     }
 
     /// Sticky-deny recovery: drop the keychain token, then restart the loop.
@@ -179,6 +246,7 @@ final class ConnectionController {
                 statusMessage = "Connected"
                 lastDelay = nil   // reset on success
                 append("connected")
+                Task { @MainActor [weak self] in await self?.loadMonitorDetails(ip: ip) }
                 // Park here until the driver detects a disconnect (server
                 // close, receive-loop error, application-level heartbeat
                 // timeout). Any throw surfaces as a connection loss and we
@@ -210,6 +278,15 @@ final class ConnectionController {
             do { try await Task.sleep(for: delay) }
             catch { return }   // cancelled while sleeping
         }
+    }
+
+    private func loadMonitorDetails(ip: String) async {
+        do {
+            preferences.monitorMAC = try await lan.deviceInfo(host: ip).wifiMac
+        } catch {
+            append("device info failed: \(error)")
+        }
+        await refreshVolume()
     }
 
     private func append(_ line: String) {
