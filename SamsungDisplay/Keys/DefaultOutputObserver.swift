@@ -42,6 +42,8 @@ final class DefaultOutputObserver {
             mElement: kAudioObjectPropertyElementMain
         )
         var size = UInt32(MemoryLayout<Value>.size)
-        return AudioObjectGetPropertyData(object, &address, 0, nil, &size, &value) == noErr
+        return withUnsafeMutableBytes(of: &value) { buffer in
+            AudioObjectGetPropertyData(object, &address, 0, nil, &size, buffer.baseAddress!) == noErr
+        }
     }
 }
