@@ -20,11 +20,11 @@ import Foundation
 /// All inputs are statically valid (scheme/host/path never user-controlled in
 /// a way that would produce an invalid URL), so the internal force-unwrap is
 /// safe.
-func samsungWebSocketURL(host: String, appName: String, token: String?) -> URL {
+func samsungWebSocketURL(host: String, appName: String, token: String?, port: Int = 8002) -> URL {
     var components = URLComponents()
-    components.scheme = "wss"
+    components.scheme = port == 8001 ? "ws" : "wss"
     components.host = host
-    components.port = 8002
+    components.port = port
     components.path = "/api/v2/channels/samsung.remote.control"
 
     let encodedName = Data(appName.utf8).base64EncodedString()
@@ -35,4 +35,26 @@ func samsungWebSocketURL(host: String, appName: String, token: String?) -> URL {
     components.queryItems = queryItems
 
     return components.url!
+}
+
+let samsungRemotePorts = [8002, 8001]
+
+func firstSuccessfulPort<Result>(
+    _ ports: [Int],
+    isolation: isolated (any Actor)? = #isolation,
+    attempt: (Int) async throws -> Result
+) async throws -> Result {
+    var lastError: any Error = SamsungWSError.notConnected
+    for port in ports {
+        do {
+            return try await attempt(port)
+        } catch SamsungWSError.unauthorized {
+            throw SamsungWSError.unauthorized
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            lastError = error
+        }
+    }
+    throw lastError
 }

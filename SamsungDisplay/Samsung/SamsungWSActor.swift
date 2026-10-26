@@ -84,6 +84,12 @@ actor SamsungWSActor {
     ///   `SamsungWSError.unauthorized` on explicit reject,
     ///   `SamsungWSError.noTokenInResponse` if the loop ends without resolution.
     func connect(to ip: String, token: String?) async throws -> String {
+        try await firstSuccessfulPort(samsungRemotePorts) { port in
+            try await connect(to: ip, port: port, token: token)
+        }
+    }
+
+    private func connect(to ip: String, port: Int, token: String?) async throws -> String {
         // Tear down any previous connection so callers can call connect again
         // after a disconnect without leaking state.
         await disconnect()
@@ -96,7 +102,7 @@ actor SamsungWSActor {
                                     delegateQueue: nil)
         self.session = urlSession
 
-        let url = samsungWebSocketURL(host: ip, appName: appName, token: token)
+        let url = samsungWebSocketURL(host: ip, appName: appName, token: token, port: port)
         logOutgoingURL(url)
 
         let wsTask = urlSession.webSocketTask(with: url)
