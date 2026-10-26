@@ -5,9 +5,7 @@ struct SoundButtonRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            button(controller.isMuted == true ? "Unmute" : "Mute",
-                   systemImage: controller.isMuted == true ? "speaker.slash.fill" : "speaker.fill",
-                   key: .mute)
+            button("Mute", systemImage: "speaker.slash.fill", key: .mute)
             button("Vol-", systemImage: "speaker.minus.fill", key: .volDown)
             button("Vol+", systemImage: "speaker.plus.fill", key: .volUp)
         }
