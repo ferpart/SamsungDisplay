@@ -8,11 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		0D230ED5037998C042604328 /* InfoPlistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */; };
+		0F8AFF392EAA053158F64FAA /* RenderingControlSOAPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */; };
 		16D771B04FEB629B15D63AFC /* ConnectionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96279A8F121AFC8F609D5C48 /* ConnectionControllerTests.swift */; };
 		24E7D087FE05804DCE4BED6D /* PopoverContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729EC6E8A244384538B2A0B2 /* PopoverContent.swift */; };
+		2ED5066AC98BE1014000F128 /* SamsungLANClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */; };
 		3DA4F392233ABA0A5862DA20 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5671CFE904DED2F980B6FC4E /* ConnectionState.swift */; };
+		417073FBF952FC6995C012E4 /* WakeOnLAN.swift in Sources */ = {isa = PBXBuildFile; fileRef = E353643AED1B18B46D411968 /* WakeOnLAN.swift */; };
 		5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0238ABC374962D76E352264F /* MediaKeyPermission.swift */; };
+		627A1634168D0A9D13AE760E /* WakeOnLANTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F17A82B16D8C69E9758B58A /* WakeOnLANTests.swift */; };
+		662081DDC6A79FF48C337CF9 /* SamsungDeviceInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3128A14FA2513DFB53AE0E87 /* SamsungDeviceInfo.swift */; };
 		6A470148E9C8B137B99673AB /* AppPreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BB2A75FAAE59E1971CEC2F /* AppPreferencesTests.swift */; };
+		6D701F16FAFAE70AFB418BB1 /* MonitorDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */; };
 		6F0728C810E1D4AE10ED1F98 /* SamsungWSActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4DE6E8416BE3393674D38 /* SamsungWSActor.swift */; };
 		6F73D53567249FD61FA53AB6 /* SamsungAuthResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA106FF43288C01EB340C37 /* SamsungAuthResponseTests.swift */; };
 		72E07EE84FA5E573E7B17274 /* SamsungCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E248182471EBB60F54F76DF /* SamsungCommand.swift */; };
@@ -23,6 +29,7 @@
 		87C0EFC820C36CE3104344A4 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB29B4F90848E8420883677C /* AppPreferences.swift */; };
 		8D34FF002ADA3202B351E970 /* MediaKeyEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B44E16972F406CA04990AD /* MediaKeyEventTests.swift */; };
 		93679F00BFD52309A58B60DC /* VolumeKeyGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1181AEF458B90CD3E147887B /* VolumeKeyGate.swift */; };
+		95A13AD7FECDEFE34B62027B /* SSDPResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAEEAB9375E62EB59213E0AC /* SSDPResponseTests.swift */; };
 		981E898055F6054FAB03988D /* SpyWSDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F969F20FBE6D0B04670836C /* SpyWSDriver.swift */; };
 		98F06DEC481892982440A582 /* SamsungTLSDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */; };
 		A171918531615BE7251315B2 /* SamsungTLSDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D521645623879EBD5000B3 /* SamsungTLSDelegate.swift */; };
@@ -32,6 +39,7 @@
 		AF159A7226BFD86E380A14C5 /* SamsungDisplayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */; };
 		B2C3AFCDDD340D2B1D6A1B99 /* VolumeOSD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3CF39F021E59AF446C6D17 /* VolumeOSD.swift */; };
 		B302A51D0F831168A872077D /* ConnectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8211B918549A6E6A84C279E0 /* ConnectionController.swift */; };
+		B31C0261213217D08029F20F /* RenderingControlSOAP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */; };
 		B72AF365FB91B766CFB38260 /* ValidationHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751DED7E95DB2DAE187D7ED0 /* ValidationHarness.swift */; };
 		BA6595BA9E578EC4EF2F1999 /* SamsungWSActorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */; };
 		BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */; };
@@ -40,12 +48,14 @@
 		D698B696AA2AEC1ACB4B4DBB /* SamsungDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80663A2A6ED85ED3FB0A5EDC /* SamsungDevice.swift */; };
 		D7E3B19AAF9478FD384313A6 /* FakePathObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF94448E1239C5CD41BC43D6 /* FakePathObserver.swift */; };
 		DB87D67A3A46F6976A6FFCFA /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A049CEE98D8AB72889D2C6D /* TokenStore.swift */; };
+		DB92A121472FF5CE9E3FCAB6 /* SSDPResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1C10530D9DC374328146E3 /* SSDPResponse.swift */; };
 		E017E3BD8907712E7BBCBA31 /* VolumeKeyGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2163DF07B591F160EAB9708C /* VolumeKeyGateTests.swift */; };
 		E4D6BF2CC49FA46F8D0C6CAA /* SamsungCommandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */; };
 		E4F0E24ECD42763BE8B4ECF9 /* VolumeKeyRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F432158895D0A0C9E51F572 /* VolumeKeyRouter.swift */; };
 		E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */; };
 		EA47C8C8B136348AF8C1188A /* SamsungURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B106AAE2D14C273BD988B67 /* SamsungURL.swift */; };
 		ECBDFCD63E26D87466917654 /* TokenStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */; };
+		F32779B22D9062FC610BFB97 /* FakeLANDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90322D32DA33BBFAF5B45FE2 /* FakeLANDriver.swift */; };
 		FE46D8A526BD582357A97313 /* SamsungURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -68,6 +78,7 @@
 		2163DF07B591F160EAB9708C /* VolumeKeyGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeKeyGateTests.swift; sourceTree = "<group>"; };
 		22337E9C767D53CE15D49CCF /* SamsungDisplayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SamsungDisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungWSActorTests.swift; sourceTree = "<group>"; };
+		3128A14FA2513DFB53AE0E87 /* SamsungDeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungDeviceInfo.swift; sourceTree = "<group>"; };
 		37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungCommandTests.swift; sourceTree = "<group>"; };
 		5671CFE904DED2F980B6FC4E /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
 		56DD1F09BA455AFDDD8D17C6 /* MediaKeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaKeyTap.swift; sourceTree = "<group>"; };
@@ -80,11 +91,13 @@
 		751DED7E95DB2DAE187D7ED0 /* ValidationHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationHarness.swift; sourceTree = "<group>"; };
 		77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungDisplayApp.swift; sourceTree = "<group>"; };
 		7B106AAE2D14C273BD988B67 /* SamsungURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungURL.swift; sourceTree = "<group>"; };
+		7F17A82B16D8C69E9758B58A /* WakeOnLANTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeOnLANTests.swift; sourceTree = "<group>"; };
 		80663A2A6ED85ED3FB0A5EDC /* SamsungDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungDevice.swift; sourceTree = "<group>"; };
 		8211B918549A6E6A84C279E0 /* ConnectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionController.swift; sourceTree = "<group>"; };
 		86B44E16972F406CA04990AD /* MediaKeyEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaKeyEventTests.swift; sourceTree = "<group>"; };
 		889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStoreTests.swift; sourceTree = "<group>"; };
 		8F969F20FBE6D0B04670836C /* SpyWSDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpyWSDriver.swift; sourceTree = "<group>"; };
+		90322D32DA33BBFAF5B45FE2 /* FakeLANDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeLANDriver.swift; sourceTree = "<group>"; };
 		96279A8F121AFC8F609D5C48 /* ConnectionControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionControllerTests.swift; sourceTree = "<group>"; };
 		97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconnectPolicyTests.swift; sourceTree = "<group>"; };
 		989782F2F2744F85FB1FA4D6 /* ReconnectPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconnectPolicy.swift; sourceTree = "<group>"; };
@@ -100,9 +113,16 @@
 		CEF4DE6E8416BE3393674D38 /* SamsungWSActor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungWSActor.swift; sourceTree = "<group>"; };
 		D5BB2A75FAAE59E1971CEC2F /* AppPreferencesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferencesTests.swift; sourceTree = "<group>"; };
 		DA9B28DD9059270BCCAC1132 /* SamsungAuthResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungAuthResponse.swift; sourceTree = "<group>"; };
+		DAEEAB9375E62EB59213E0AC /* SSDPResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSDPResponseTests.swift; sourceTree = "<group>"; };
 		DB29B4F90848E8420883677C /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		DD1C10530D9DC374328146E3 /* SSDPResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSDPResponse.swift; sourceTree = "<group>"; };
+		E353643AED1B18B46D411968 /* WakeOnLAN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeOnLAN.swift; sourceTree = "<group>"; };
 		EA8DD97CB812A25BABF82A29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		EBB82FBF79E8EF4F50E0FE05 /* DefaultOutputObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultOutputObserver.swift; sourceTree = "<group>"; };
+		EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorDiscovery.swift; sourceTree = "<group>"; };
+		F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAPTests.swift; sourceTree = "<group>"; };
+		F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAP.swift; sourceTree = "<group>"; };
+		F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungLANClient.swift; sourceTree = "<group>"; };
 		F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SamsungDisplay.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -110,6 +130,7 @@
 		070D80D87700B81DC419BD8A /* Doubles */ = {
 			isa = PBXGroup;
 			children = (
+				90322D32DA33BBFAF5B45FE2 /* FakeLANDriver.swift */,
 				AF94448E1239C5CD41BC43D6 /* FakePathObserver.swift */,
 				8F969F20FBE6D0B04670836C /* SpyWSDriver.swift */,
 			);
@@ -119,12 +140,17 @@
 		0BA93E17AB0B1EC3FC03ED34 /* Samsung */ = {
 			isa = PBXGroup;
 			children = (
+				F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */,
 				DA9B28DD9059270BCCAC1132 /* SamsungAuthResponse.swift */,
 				6E248182471EBB60F54F76DF /* SamsungCommand.swift */,
 				80663A2A6ED85ED3FB0A5EDC /* SamsungDevice.swift */,
+				3128A14FA2513DFB53AE0E87 /* SamsungDeviceInfo.swift */,
+				F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */,
 				C0D521645623879EBD5000B3 /* SamsungTLSDelegate.swift */,
 				7B106AAE2D14C273BD988B67 /* SamsungURL.swift */,
 				CEF4DE6E8416BE3393674D38 /* SamsungWSActor.swift */,
+				DD1C10530D9DC374328146E3 /* SSDPResponse.swift */,
+				E353643AED1B18B46D411968 /* WakeOnLAN.swift */,
 			);
 			path = Samsung;
 			sourceTree = "<group>";
@@ -152,6 +178,7 @@
 			children = (
 				8211B918549A6E6A84C279E0 /* ConnectionController.swift */,
 				5671CFE904DED2F980B6FC4E /* ConnectionState.swift */,
+				EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */,
 				A86AE0409CD6457042D36556 /* NetworkPathObserver.swift */,
 				989782F2F2744F85FB1FA4D6 /* ReconnectPolicy.swift */,
 			);
@@ -225,14 +252,17 @@
 				86B44E16972F406CA04990AD /* MediaKeyEventTests.swift */,
 				67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */,
 				97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */,
+				F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */,
 				9BA106FF43288C01EB340C37 /* SamsungAuthResponseTests.swift */,
 				37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */,
 				07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */,
 				AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */,
 				254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */,
+				DAEEAB9375E62EB59213E0AC /* SSDPResponseTests.swift */,
 				A5CEC04F521C24783E7066F2 /* TapRepairTests.swift */,
 				889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */,
 				2163DF07B591F160EAB9708C /* VolumeKeyGateTests.swift */,
+				7F17A82B16D8C69E9758B58A /* WakeOnLANTests.swift */,
 			);
 			path = SamsungDisplayTests;
 			sourceTree = "<group>";
@@ -326,13 +356,18 @@
 				7795BB70007A34A20FA4A620 /* MediaKeyEvent.swift in Sources */,
 				5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */,
 				8348E96114E7DD5820265291 /* MediaKeyTap.swift in Sources */,
+				6D701F16FAFAE70AFB418BB1 /* MonitorDiscovery.swift in Sources */,
 				A2BB3460C3F93F8FF5F4E86B /* NetworkPathObserver.swift in Sources */,
 				24E7D087FE05804DCE4BED6D /* PopoverContent.swift in Sources */,
 				C30BE0819FB6C635668C042A /* ReconnectPolicy.swift in Sources */,
+				B31C0261213217D08029F20F /* RenderingControlSOAP.swift in Sources */,
+				DB92A121472FF5CE9E3FCAB6 /* SSDPResponse.swift in Sources */,
 				81C175C566EC97ABD6E783A8 /* SamsungAuthResponse.swift in Sources */,
 				72E07EE84FA5E573E7B17274 /* SamsungCommand.swift in Sources */,
 				D698B696AA2AEC1ACB4B4DBB /* SamsungDevice.swift in Sources */,
+				662081DDC6A79FF48C337CF9 /* SamsungDeviceInfo.swift in Sources */,
 				AF159A7226BFD86E380A14C5 /* SamsungDisplayApp.swift in Sources */,
+				2ED5066AC98BE1014000F128 /* SamsungLANClient.swift in Sources */,
 				A171918531615BE7251315B2 /* SamsungTLSDelegate.swift in Sources */,
 				EA47C8C8B136348AF8C1188A /* SamsungURL.swift in Sources */,
 				6F0728C810E1D4AE10ED1F98 /* SamsungWSActor.swift in Sources */,
@@ -342,6 +377,7 @@
 				93679F00BFD52309A58B60DC /* VolumeKeyGate.swift in Sources */,
 				E4F0E24ECD42763BE8B4ECF9 /* VolumeKeyRouter.swift in Sources */,
 				B2C3AFCDDD340D2B1D6A1B99 /* VolumeOSD.swift in Sources */,
+				417073FBF952FC6995C012E4 /* WakeOnLAN.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,11 +388,14 @@
 				6A470148E9C8B137B99673AB /* AppPreferencesTests.swift in Sources */,
 				16D771B04FEB629B15D63AFC /* ConnectionControllerTests.swift in Sources */,
 				C7A7938A5287F9886F792714 /* ConnectionStateTests.swift in Sources */,
+				F32779B22D9062FC610BFB97 /* FakeLANDriver.swift in Sources */,
 				D7E3B19AAF9478FD384313A6 /* FakePathObserver.swift in Sources */,
 				0D230ED5037998C042604328 /* InfoPlistTests.swift in Sources */,
 				8D34FF002ADA3202B351E970 /* MediaKeyEventTests.swift in Sources */,
 				BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */,
 				E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */,
+				0F8AFF392EAA053158F64FAA /* RenderingControlSOAPTests.swift in Sources */,
+				95A13AD7FECDEFE34B62027B /* SSDPResponseTests.swift in Sources */,
 				6F73D53567249FD61FA53AB6 /* SamsungAuthResponseTests.swift in Sources */,
 				E4D6BF2CC49FA46F8D0C6CAA /* SamsungCommandTests.swift in Sources */,
 				98F06DEC481892982440A582 /* SamsungTLSDelegateTests.swift in Sources */,
@@ -366,6 +405,7 @@
 				AC2DFC77546B58A4C0F65C67 /* TapRepairTests.swift in Sources */,
 				ECBDFCD63E26D87466917654 /* TokenStoreTests.swift in Sources */,
 				E017E3BD8907712E7BBCBA31 /* VolumeKeyGateTests.swift in Sources */,
+				627A1634168D0A9D13AE760E /* WakeOnLANTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
