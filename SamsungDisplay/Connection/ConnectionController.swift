@@ -28,6 +28,7 @@ final class ConnectionController {
     private(set) var logEntries: [String] = []
     private(set) var volume: Int?
     private(set) var isMuted: Bool?
+    private(set) var monitorName: String?
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
@@ -96,15 +97,18 @@ final class ConnectionController {
     /// sends do not redefine our connection truth.
     func send(_ key: SamsungCommand.Key) {
         Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await self.ws.sendKey(key)
-                if [.volUp, .volDown, .mute].contains(key), self.volume != nil {
-                    await self.refreshVolume()
-                }
-            } catch {
-                self.append("send \(key.rawValue) failed: \(error)")
+            await self?.sendAndRefresh(key)
+        }
+    }
+
+    func sendAndRefresh(_ key: SamsungCommand.Key) async {
+        do {
+            try await ws.sendKey(key)
+            if [.volUp, .volDown, .mute].contains(key), volume != nil {
+                await refreshVolume()
             }
+        } catch {
+            append("send \(key.rawValue) failed: \(error)")
         }
     }
 
@@ -165,6 +169,19 @@ final class ConnectionController {
     func selectHDMI(_ port: Int) {
         guard let key = SamsungCommand.Key(rawValue: "KEY_HDMI\(port)") else { return }
         send(key)
+    }
+
+    func connect(to ip: String) {
+        preferences.monitorIP = ip
+        start(ip: ip)
+    }
+
+    func forgetMonitor() {
+        lifecycleTask?.cancel()
+        lifecycleTask = nil
+        preferences.monitorIP = nil
+        state = .noIP
+        statusMessage = "Not connected — set monitor IP in Settings"
     }
 
     /// Sticky-deny recovery: drop the keychain token, then restart the loop.
@@ -282,7 +299,9 @@ final class ConnectionController {
 
     private func loadMonitorDetails(ip: String) async {
         do {
-            preferences.monitorMAC = try await lan.deviceInfo(host: ip).wifiMac
+            let info = try await lan.deviceInfo(host: ip)
+            preferences.monitorMAC = info.wifiMac
+            monitorName = info.name
         } catch {
             append("device info failed: \(error)")
         }

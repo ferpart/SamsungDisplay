@@ -357,6 +357,38 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
+    func test_sendAndRefresh_returnsAfterVolumeRefresh() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.volume == 20 }
+
+        lan.volumeLevel = 25
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 25)
+        controller.stop()
+    }
+
+    func test_connect_storesMonitorName() async throws {
+        let controller = try await connectedController()
+        try await waitFor { controller.monitorName == "OLED G9" }
+        controller.stop()
+    }
+
+    func test_connectTo_storesIPAndConnects() async throws {
+        spy.nextConnectOutcome = .success(token: "t")
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertEqual(preferences.monitorIP, "192.168.1.77")
+        controller.stop()
+    }
+
+    func test_forgetMonitor_clearsIPAndReturnsToNoIP() async throws {
+        let controller = try await connectedController()
+        controller.forgetMonitor()
+        XCTAssertNil(preferences.monitorIP)
+        XCTAssertEqual(controller.state, .noIP)
+    }
+
     func test_setVolume_clampsAndForwards() async throws {
         let controller = try await connectedController()
         controller.setVolume(140)
