@@ -23,6 +23,7 @@ struct AppPreferences: @unchecked Sendable {
 
     private enum Key {
         static let monitorIP = "monitorIP"
+        static let audioOutputName = "audioOutputName"
     }
 
     var monitorIP: String? {
@@ -34,6 +35,17 @@ struct AppPreferences: @unchecked Sendable {
                 // Use removeObject — `set(nil, forKey:)` writes NSNull which
                 // makes `object(forKey:)` return non-nil and is a footgun.
                 defaults.removeObject(forKey: Key.monitorIP)
+            }
+        }
+    }
+
+    var audioOutputName: String? {
+        get { defaults.string(forKey: Key.audioOutputName) }
+        nonmutating set {
+            if let newValue {
+                defaults.set(newValue, forKey: Key.audioOutputName)
+            } else {
+                defaults.removeObject(forKey: Key.audioOutputName)
             }
         }
     }
