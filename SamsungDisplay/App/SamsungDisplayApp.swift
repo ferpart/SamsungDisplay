@@ -16,6 +16,11 @@ struct SamsungDisplayApp: App {
         }
         .windowResizability(.contentMinSize)
 
+        Window("Remote", id: "remote") {
+            RemoteView(controller: appDelegate.controller)
+        }
+        .windowResizability(.contentSize)
+
         Window("Set up SamsungDisplay", id: "onboarding") {
             OnboardingView(controller: appDelegate.controller, permission: appDelegate.volumeKeys.permission)
         }

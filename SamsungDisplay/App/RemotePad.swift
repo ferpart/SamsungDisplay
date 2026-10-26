@@ -21,7 +21,7 @@ struct RemotePad: View {
                 arrow("chevron.right", key: .right)
             }
             GridRow {
-                plain("Source", systemImage: "rectangle.on.rectangle", key: .source)
+                Color.clear.frame(height: 1)
                 arrow("chevron.down", key: .down)
                 Color.clear.frame(height: 1)
             }
