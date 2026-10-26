@@ -29,6 +29,7 @@ final class ConnectionController {
     private(set) var volume: Int?
     private(set) var isMuted: Bool?
     private(set) var monitorName: String?
+    private(set) var powerState: PowerState?
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
@@ -155,27 +156,73 @@ final class ConnectionController {
         }
     }
 
-    // KEY_POWER toggles the power state.
-    func powerOff() {
-        send(.power)
+    func powerOn() {
+        Task { @MainActor [weak self] in await self?.changePower(toOn: true) }
     }
 
-    func powerOn() {
+    func powerOff() {
+        Task { @MainActor [weak self] in await self?.changePower(toOn: false) }
+    }
+
+    func togglePower() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.changePower(toOn: await self.readPowerState() != .on)
+        }
+    }
+
+    func refreshPowerState() async {
+        _ = await readPowerState()
+    }
+
+    func changePower(toOn: Bool) async {
+        switch (toOn, await readPowerState()) {
+        case (true, .on), (false, .standby), (false, .off): return
+        case (false, .on): await sendAndRefresh(.power)
+        case (true, .standby): await sendPowerKeyWhenConnected()
+        case (true, .off): await wakeOnLAN()
+        }
+    }
+
+    private func readPowerState() async -> PowerState {
+        guard let ip = preferences.monitorIP else { return .off }
+        let current: PowerState
+        do {
+            current = PowerState(apiValue: try await lan.deviceInfo(host: ip).powerState)
+        } catch {
+            current = .off
+        }
+        powerState = current
+        return current
+    }
+
+    private func sendPowerKeyWhenConnected() async {
+        if state != .connected, let ip = preferences.monitorIP {
+            start(ip: ip)
+            for _ in 0..<50 where state != .connected {
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        guard state == .connected else {
+            append("power on skipped: not connected")
+            return
+        }
+        await sendAndRefresh(.power)
+    }
+
+    private func wakeOnLAN() async {
         guard let mac = preferences.monitorMAC else {
             append("power on skipped: no MAC stored")
             return
         }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await self.lan.wake(mac: mac)
-                self.append("wake-on-LAN sent")
-                if self.state != .connected, let ip = self.preferences.monitorIP {
-                    self.start(ip: ip)
-                }
-            } catch {
-                self.append("wake-on-LAN failed: \(error)")
+        do {
+            try await lan.wake(mac: mac)
+            append("wake-on-LAN sent")
+            if state != .connected, let ip = preferences.monitorIP {
+                start(ip: ip)
             }
+        } catch {
+            append("wake-on-LAN failed: \(error)")
         }
     }
 
@@ -183,9 +230,8 @@ final class ConnectionController {
         send(.source)
     }
 
-    func selectHDMI(_ port: Int) {
-        guard let key = SamsungCommand.Key(rawValue: "KEY_HDMI\(port)") else { return }
-        send(key)
+    func nextHDMIInput() {
+        send(.hdmi)
     }
 
     func connect(to ip: String) {
@@ -346,6 +392,7 @@ final class ConnectionController {
             let info = try await lan.deviceInfo(host: ip)
             preferences.monitorMAC = info.wifiMac
             monitorName = info.name
+            powerState = PowerState(apiValue: info.powerState)
         } catch {
             append("device info failed: \(error)")
         }

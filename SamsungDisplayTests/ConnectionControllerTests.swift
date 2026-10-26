@@ -474,28 +474,98 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
-    func test_powerOn_sendsWakeToStoredMAC() async throws {
-        preferences.monitorMAC = "02:00:00:00:00:01"
-        let controller = makeController()
-        controller.powerOn()
-        try await waitFor { self.lan.wakeCalls == ["02:00:00:00:00:01"] }
+    func test_powerOn_whenAPIAnswersStandby_sendsPowerKeyOverWebSocket() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        XCTAssertTrue(lan.wakeCalls.isEmpty)
+        XCTAssertEqual(controller.powerState, .standby)
+        controller.stop()
     }
 
-    func test_powerOn_withoutMAC_logsAndSkips() {
+    func test_powerOn_whenAPIAnswersOn_doesNothing() async throws {
+        let controller = try await connectedController()
+        await controller.changePower(toOn: true)
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+        XCTAssertTrue(lan.wakeCalls.isEmpty)
+        controller.stop()
+    }
+
+    func test_powerOn_whenAPIDoesNotAnswer_sendsWakeOnLANToStoredMAC() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        preferences.monitorMAC = "02:00:00:00:00:01"
+        lan.deviceInfoFails = true
         let controller = makeController()
-        controller.powerOn()
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(lan.wakeCalls, ["02:00:00:00:00:01"])
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+        XCTAssertEqual(controller.powerState, .off)
+    }
+
+    func test_powerOn_whenAPIDoesNotAnswerAndNoMAC_logsAndSkips() async {
+        lan.deviceInfoFails = true
+        let controller = makeController()
+        await controller.changePower(toOn: true)
         XCTAssertTrue(controller.logEntries.last?.contains("no MAC stored") == true)
         XCTAssertTrue(lan.wakeCalls.isEmpty)
     }
 
-    func test_powerOffAndInputs_sendExpectedKeys() async throws {
+    func test_powerOn_inStandbyWhileDisconnected_reconnectsThenSendsPowerKey() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .success(token: "t")
+        lan.powerState = "standby"
+        let controller = makeController()
+        XCTAssertNotEqual(controller.state, .connected)
+        await controller.changePower(toOn: true)
+        XCTAssertEqual(controller.state, .connected)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        controller.stop()
+    }
+
+    func test_powerOff_onlySendsPowerKeyWhenOn() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        await controller.changePower(toOn: false)
+        XCTAssertTrue(spy.sendKeyCalls.isEmpty)
+
+        lan.powerState = "on"
+        await controller.changePower(toOn: false)
+        XCTAssertEqual(spy.sendKeyCalls, [.power])
+        controller.stop()
+    }
+
+    func test_refreshPowerState_publishesOnStandbyAndOff() async throws {
+        let controller = makeController()
+        preferences.monitorIP = "192.168.1.10"
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .on)
+        lan.powerState = "standby"
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .standby)
+        lan.deviceInfoFails = true
+        await controller.refreshPowerState()
+        XCTAssertEqual(controller.powerState, .off)
+    }
+
+    func test_standby_connectionLostThenMonitorAcceptsSocket_reconnects() async throws {
+        let controller = try await connectedController()
+        lan.powerState = "standby"
+        let baseline = spy.connectCalls.count
+
+        spy.simulateClose(error: URLError(.networkConnectionLost))
+        try await waitFor({ self.spy.connectCalls.count > baseline && controller.state == .connected },
+                          timeout: .milliseconds(2500))
+        controller.stop()
+    }
+
+    func test_powerOffInputsAndPad_sendExpectedKeys() async throws {
         let controller = try await connectedController()
         controller.powerOff()
         controller.openInputSourceMenu()
-        controller.selectHDMI(2)
-        controller.selectHDMI(9)
+        controller.nextHDMIInput()
         try await waitFor { self.spy.sendKeyCalls.count == 3 }
-        XCTAssertEqual(Set(spy.sendKeyCalls), [.power, .source, .hdmi2])
+        XCTAssertEqual(Set(spy.sendKeyCalls), [.power, .source, .hdmi])
         controller.stop()
     }
 }

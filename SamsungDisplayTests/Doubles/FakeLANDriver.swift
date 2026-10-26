@@ -11,6 +11,7 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         var isMuted = false
         var volumeReads = 0
         var setVolumeFails = false
+        var deviceInfoFails = false
         var muteReads = 0
         var setVolumeCalls: [Int] = []
         var wakeCalls: [String] = []
@@ -30,13 +31,29 @@ final class FakeLANDriver: SamsungLANDriving, @unchecked Sendable {
         get { state.withLock { $0.setVolumeFails } }
         set { state.withLock { $0.setVolumeFails = newValue } }
     }
+    var deviceInfoFails: Bool {
+        get { state.withLock { $0.deviceInfoFails } }
+        set { state.withLock { $0.deviceInfoFails = newValue } }
+    }
+    var powerState: String? {
+        get { state.withLock { $0.info.powerState } }
+        set {
+            state.withLock {
+                let info = $0.info
+                $0.info = SamsungDeviceInfo(ip: info.ip, name: info.name, modelName: info.modelName,
+                                            wifiMac: info.wifiMac, powerState: newValue)
+            }
+        }
+    }
     var muteReads: Int { state.withLock { $0.muteReads } }
     var volumeReads: Int { state.withLock { $0.volumeReads } }
     var setVolumeCalls: [Int] { state.withLock { $0.setVolumeCalls } }
     var wakeCalls: [String] { state.withLock { $0.wakeCalls } }
 
     func deviceInfo(host: String) async throws -> SamsungDeviceInfo {
-        state.withLock { $0.info }
+        let (info, fails) = state.withLock { ($0.info, $0.deviceInfoFails) }
+        if fails { throw SamsungLANError.badResponse }
+        return info
     }
 
     func volume(host: String) async throws -> Int {

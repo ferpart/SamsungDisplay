@@ -25,6 +25,12 @@ struct PopoverContent: View {
         }
         .padding(14)
         .frame(width: 300)
+        .task {
+            while !Task.isCancelled {
+                await controller.refreshPowerState()
+                try? await Task.sleep(for: .seconds(3))
+            }
+        }
     }
 
     private var header: some View {
@@ -53,6 +59,7 @@ struct PopoverContent: View {
                 powerCard
                 inputCard
             }
+            RemotePad(controller: controller)
         }
     }
 
@@ -89,25 +96,22 @@ struct PopoverContent: View {
 
     private var powerCard: some View {
         VStack(spacing: 8) {
-            Button { controller.powerOn() } label: {
-                Label("Power on", systemImage: "power").frame(maxWidth: .infinity)
+            Text(controller.powerState.map { "Power: \($0.label)" } ?? "Power")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button { controller.togglePower() } label: {
+                Label(controller.powerState == .on ? "Power off" : "Power on", systemImage: "power")
+                    .frame(maxWidth: .infinity)
             }
-            Button { controller.powerOff() } label: {
-                Label("Power off", systemImage: "power.dotted").frame(maxWidth: .infinity)
-            }
-            .disabled(!isConnected)
+            .buttonStyle(.glass)
         }
-        .buttonStyle(.glass)
         .glassCard()
     }
 
     private var inputCard: some View {
         Menu {
             Button("Source") { controller.openInputSourceMenu() }
-            Divider()
-            ForEach(1...4, id: \.self) { port in
-                Button("HDMI \(port)") { controller.selectHDMI(port) }
-            }
+            Button("Next HDMI input") { controller.nextHDMIInput() }
         } label: {
             Label("Input", systemImage: "cable.connector.horizontal").frame(maxWidth: .infinity)
         }
