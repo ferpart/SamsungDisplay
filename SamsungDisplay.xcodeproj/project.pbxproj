@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0D230ED5037998C042604328 /* InfoPlistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */; };
-		0F8AFF392EAA053158F64FAA /* RenderingControlSOAPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */; };
 		1356D3FFB6DFDFE1C2C27AA9 /* RemoteKeyMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = D510519D1127A133605E85A0 /* RemoteKeyMapping.swift */; };
 		16D771B04FEB629B15D63AFC /* ConnectionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96279A8F121AFC8F609D5C48 /* ConnectionControllerTests.swift */; };
 		24E7D087FE05804DCE4BED6D /* PopoverContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729EC6E8A244384538B2A0B2 /* PopoverContent.swift */; };
@@ -49,7 +48,6 @@
 		AF159A7226BFD86E380A14C5 /* SamsungDisplayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */; };
 		B2C3AFCDDD340D2B1D6A1B99 /* VolumeOSD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3CF39F021E59AF446C6D17 /* VolumeOSD.swift */; };
 		B302A51D0F831168A872077D /* ConnectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8211B918549A6E6A84C279E0 /* ConnectionController.swift */; };
-		B31C0261213217D08029F20F /* RenderingControlSOAP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */; };
 		B987AAF2497133C6FD75F728 /* OnboardingStepTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54CC5E1B08180262C286BF32 /* OnboardingStepTests.swift */; };
 		BA6595BA9E578EC4EF2F1999 /* SamsungWSActorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */; };
 		BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */; };
@@ -146,8 +144,6 @@
 		EA8DD97CB812A25BABF82A29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		EBB82FBF79E8EF4F50E0FE05 /* DefaultOutputObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultOutputObserver.swift; sourceTree = "<group>"; };
 		EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorDiscovery.swift; sourceTree = "<group>"; };
-		F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAPTests.swift; sourceTree = "<group>"; };
-		F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderingControlSOAP.swift; sourceTree = "<group>"; };
 		F77BD7AA74336571615DB52B /* RemoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteView.swift; sourceTree = "<group>"; };
 		F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungLANClient.swift; sourceTree = "<group>"; };
 		F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SamsungDisplay.entitlements; sourceTree = "<group>"; };
@@ -167,7 +163,6 @@
 		0BA93E17AB0B1EC3FC03ED34 /* Samsung */ = {
 			isa = PBXGroup;
 			children = (
-				F2073C731EF031E9494DB934 /* RenderingControlSOAP.swift */,
 				DA9B28DD9059270BCCAC1132 /* SamsungAuthResponse.swift */,
 				6E248182471EBB60F54F76DF /* SamsungCommand.swift */,
 				80663A2A6ED85ED3FB0A5EDC /* SamsungDevice.swift */,
@@ -309,7 +304,6 @@
 				54CC5E1B08180262C286BF32 /* OnboardingStepTests.swift */,
 				97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */,
 				49728B4CE83EA861C40A74FC /* RemoteKeyMappingTests.swift */,
-				F0864D70385B2C8E8951E76E /* RenderingControlSOAPTests.swift */,
 				9BA106FF43288C01EB340C37 /* SamsungAuthResponseTests.swift */,
 				37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */,
 				07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */,
@@ -428,7 +422,6 @@
 				1356D3FFB6DFDFE1C2C27AA9 /* RemoteKeyMapping.swift in Sources */,
 				8C777503A85B88A095CA8EB1 /* RemotePad.swift in Sources */,
 				C6DB36200BF11CF0323B4ECA /* RemoteView.swift in Sources */,
-				B31C0261213217D08029F20F /* RenderingControlSOAP.swift in Sources */,
 				DB92A121472FF5CE9E3FCAB6 /* SSDPResponse.swift in Sources */,
 				81C175C566EC97ABD6E783A8 /* SamsungAuthResponse.swift in Sources */,
 				72E07EE84FA5E573E7B17274 /* SamsungCommand.swift in Sources */,
@@ -464,7 +457,6 @@
 				B987AAF2497133C6FD75F728 /* OnboardingStepTests.swift in Sources */,
 				E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */,
 				2F49AF37DCF0DB5E30B0E7FE /* RemoteKeyMappingTests.swift in Sources */,
-				0F8AFF392EAA053158F64FAA /* RenderingControlSOAPTests.swift in Sources */,
 				95A13AD7FECDEFE34B62027B /* SSDPResponseTests.swift in Sources */,
 				6F73D53567249FD61FA53AB6 /* SamsungAuthResponseTests.swift in Sources */,
 				E4D6BF2CC49FA46F8D0C6CAA /* SamsungCommandTests.swift in Sources */,
