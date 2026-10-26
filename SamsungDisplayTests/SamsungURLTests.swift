@@ -71,4 +71,54 @@ final class SamsungURLTests: XCTestCase {
         XCTAssertEqual(url.port, 8002)
         XCTAssertEqual(url.path, "/api/v2/channels/samsung.remote.control")
     }
+
+    // MARK: - Port fallback
+
+    func test_port8001_usesPlainWebSocket() {
+        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil, port: 8001)
+        XCTAssertEqual(url.scheme, "ws")
+        XCTAssertEqual(url.port, 8001)
+    }
+
+    func test_fallback_tries8002Then8001() async throws {
+        var tried: [Int] = []
+        let port = try await firstSuccessfulPort(samsungRemotePorts) { port in
+            tried.append(port)
+            if port == 8002 { throw URLError(.cannotConnectToHost) }
+            return port
+        }
+        XCTAssertEqual(tried, [8002, 8001])
+        XCTAssertEqual(port, 8001)
+    }
+
+    func test_fallback_stopsAtFirstSuccess() async throws {
+        var tried: [Int] = []
+        _ = try await firstSuccessfulPort(samsungRemotePorts) { port in tried.append(port) }
+        XCTAssertEqual(tried, [8002])
+    }
+
+    func test_fallback_doesNotRetryAfterUnauthorized() async {
+        var tried: [Int] = []
+        do {
+            _ = try await firstSuccessfulPort(samsungRemotePorts) { port in
+                tried.append(port)
+                throw SamsungWSError.unauthorized
+            }
+            XCTFail("expected unauthorized")
+        } catch {
+            XCTAssertEqual(error as? SamsungWSError, .unauthorized)
+        }
+        XCTAssertEqual(tried, [8002])
+    }
+
+    func test_fallback_throwsLastErrorWhenAllPortsFail() async {
+        do {
+            _ = try await firstSuccessfulPort(samsungRemotePorts) { port -> Int in
+                throw URLError(port == 8002 ? .timedOut : .cannotConnectToHost)
+            }
+            XCTFail("expected failure")
+        } catch {
+            XCTAssertEqual((error as? URLError)?.code, .cannotConnectToHost)
+        }
+    }
 }
