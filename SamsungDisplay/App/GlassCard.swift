@@ -14,14 +14,23 @@ private struct GlassWindowBody: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private final class Tracker: NSView {
+        static let containerID = NSUserInterfaceItemIdentifier("GlassWindowContainer")
+
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            guard let window, !(window.contentView is NSGlassEffectView), let hosting = window.contentView else { return }
+            guard let window, window.contentView?.identifier != Self.containerID, let hosting = window.contentView else { return }
             window.isOpaque = false
             window.backgroundColor = .clear
-            let glass = NSGlassEffectView()
-            glass.contentView = hosting
-            window.contentView = glass
+            let bounds = NSRect(origin: .zero, size: window.contentRect(forFrameRect: window.frame).size)
+            let container = NSView(frame: bounds)
+            container.identifier = Self.containerID
+            let glass = NSGlassEffectView(frame: bounds)
+            glass.autoresizingMask = [.width, .height]
+            hosting.frame = bounds
+            hosting.autoresizingMask = [.width, .height]
+            window.contentView = container
+            container.addSubview(glass)
+            container.addSubview(hosting)
         }
     }
 }
