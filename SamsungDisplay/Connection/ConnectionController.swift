@@ -39,8 +39,11 @@ final class ConnectionController {
     private let policy: ReconnectPolicy
 
     private var lifecycleTask: Task<Void, Never>?
-    private var readsVolume = true
-    private var readsMute = true
+    @ObservationIgnored private var rawVolume: Int?
+    @ObservationIgnored private var rawMuted: Bool?
+    @ObservationIgnored private var volumeTrusted = false
+    @ObservationIgnored private var muteTrusted = false
+    @ObservationIgnored private var volumeDisproved = false
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
     private let logCap = 50
 
@@ -104,44 +107,35 @@ final class ConnectionController {
     }
 
     func sendAndRefresh(_ key: SamsungCommand.Key) async {
-        let volumeBefore = volume
-        let muteBefore = isMuted
+        let volumeBefore = rawVolume
+        let muteBefore = rawMuted
         do {
             try await ws.sendKey(key)
         } catch {
             append("send \(key.rawValue) failed: \(error)")
             return
         }
-        guard [.volUp, .volDown, .mute].contains(key), volume != nil || isMuted != nil else { return }
+        guard [.volUp, .volDown, .mute].contains(key), rawVolume != nil || rawMuted != nil else { return }
         await refreshVolume()
         switch key {
-        case .volUp where volumeBefore != 100, .volDown where volumeBefore != 0:
-            if let volumeBefore, volume == volumeBefore {
-                volume = nil
-                readsVolume = false
-                append("volume does not follow the keys — ignoring renderer volume")
-            }
-        case .mute:
-            if let muteBefore, isMuted == muteBefore {
-                isMuted = nil
-                readsMute = false
-                append("mute does not follow the key — ignoring renderer mute")
-            }
-        default:
-            break
+        case .volUp: trustVolumeIfMoved(by: 1, from: volumeBefore)
+        case .volDown: trustVolumeIfMoved(by: -1, from: volumeBefore)
+        case .mute: trustMuteIfFlipped(from: muteBefore)
+        default: break
         }
     }
 
     func refreshVolume() async {
         guard let ip = preferences.monitorIP else { return }
         do {
-            if readsVolume { volume = try await lan.volume(host: ip) }
-            if readsMute { isMuted = try await lan.isMuted(host: ip) }
+            rawVolume = try await lan.volume(host: ip)
+            rawMuted = try await lan.isMuted(host: ip)
         } catch {
-            volume = nil
-            isMuted = nil
+            rawVolume = nil
+            rawMuted = nil
             append("volume read failed: \(error)")
         }
+        publishRendererState()
     }
 
     func setVolume(_ level: Int) {
@@ -151,10 +145,13 @@ final class ConnectionController {
             guard let self else { return }
             do {
                 try await self.lan.setVolume(clamped, host: ip)
-                self.volume = clamped
+                self.rawVolume = clamped
             } catch {
+                self.volumeTrusted = false
+                self.volumeDisproved = true
                 self.append("set volume failed: \(error)")
             }
+            self.publishRendererState()
         }
     }
 
@@ -281,8 +278,7 @@ final class ConnectionController {
                 }
                 state = .connected
                 statusMessage = "Connected"
-                readsVolume = true
-                readsMute = true
+                resetRendererTrust()
                 lastDelay = nil   // reset on success
                 append("connected")
                 Task { @MainActor [weak self] in await self?.loadMonitorDetails(ip: ip) }
@@ -317,6 +313,32 @@ final class ConnectionController {
             do { try await Task.sleep(for: delay) }
             catch { return }   // cancelled while sleeping
         }
+    }
+
+    private func trustVolumeIfMoved(by step: Int, from before: Int?) {
+        guard !volumeDisproved, let before, let current = rawVolume, current - before == step else { return }
+        volumeTrusted = true
+        publishRendererState()
+    }
+
+    private func trustMuteIfFlipped(from before: Bool?) {
+        guard let before, let current = rawMuted, current != before else { return }
+        muteTrusted = true
+        publishRendererState()
+    }
+
+    private func publishRendererState() {
+        volume = volumeTrusted ? rawVolume : nil
+        isMuted = muteTrusted ? rawMuted : nil
+    }
+
+    private func resetRendererTrust() {
+        rawVolume = nil
+        rawMuted = nil
+        volumeTrusted = false
+        muteTrusted = false
+        volumeDisproved = false
+        publishRendererState()
     }
 
     private func loadMonitorDetails(ip: String) async {

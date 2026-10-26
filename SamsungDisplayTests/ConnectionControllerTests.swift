@@ -326,12 +326,12 @@ final class ConnectionControllerTests: XCTestCase {
         return controller
     }
 
-    func test_connect_loadsVolumeMuteAndStoresMAC() async throws {
+    private func settledController() async throws -> ConnectionController {
         let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-        XCTAssertEqual(controller.isMuted, false)
-        XCTAssertEqual(preferences.monitorMAC, "02:00:00:00:00:01")
-        controller.stop()
+        try await waitFor { self.preferences.monitorMAC != nil }
+        await controller.refreshVolume()
+        try await Task.sleep(for: .milliseconds(50))
+        return controller
     }
 
     func test_connect_withoutRenderer_leavesVolumeNil() async throws {
@@ -344,26 +344,6 @@ final class ConnectionControllerTests: XCTestCase {
         controller.send(.volUp)
         try await waitFor { self.spy.sendKeyCalls == [.volUp] }
         XCTAssertEqual(lan.volumeReads, 1, "relative keys must not poll a monitor without a renderer")
-        controller.stop()
-    }
-
-    func test_volumeKey_refreshesVolume() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-
-        lan.volumeLevel = 21
-        controller.send(.volUp)
-        try await waitFor { controller.volume == 21 }
-        controller.stop()
-    }
-
-    func test_sendAndRefresh_returnsAfterVolumeRefresh() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-
-        lan.volumeLevel = 25
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(controller.volume, 25)
         controller.stop()
     }
 
@@ -389,74 +369,108 @@ final class ConnectionControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .noIP)
     }
 
-    func test_volumeKey_withUnchangedVolume_stopsReadingRendererVolume() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-
-        await controller.sendAndRefresh(.volUp)
+    func test_connect_storesMAC_andHidesUnprovenVolumeAndMute() async throws {
+        let controller = try await settledController()
+        XCTAssertEqual(preferences.monitorMAC, "02:00:00:00:00:01")
         XCTAssertNil(controller.volume)
-
-        let readsAfterFirstKey = lan.volumeReads
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(lan.volumeReads, readsAfterFirstKey)
-        XCTAssertNil(controller.volume)
-        controller.stop()
-    }
-
-    func test_volumeKey_atLimit_keepsRendererVolume() async throws {
-        lan.volumeLevel = 100
-        let controller = try await connectedController()
-        try await waitFor { controller.volume == 100 }
-
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(controller.volume, 100)
-
-        lan.volumeLevel = 0
-        await controller.sendAndRefresh(.volDown)
-        XCTAssertEqual(controller.volume, 0)
-        controller.stop()
-    }
-
-    func test_reconnect_trustsRendererVolumeAgain() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.volume == 20 }
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
-
-        controller.start(ip: "192.168.1.10")
-        try await waitFor { controller.volume == 20 }
-        controller.stop()
-    }
-
-    func test_muteKey_withUnchangedMute_stopsReadingRendererMute() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.isMuted == false }
-
-        await controller.sendAndRefresh(.mute)
         XCTAssertNil(controller.isMuted)
-        XCTAssertEqual(controller.volume, 20)
-
-        let readsAfterFirstKey = lan.muteReads
-        await controller.sendAndRefresh(.mute)
-        XCTAssertEqual(lan.muteReads, readsAfterFirstKey)
         controller.stop()
     }
 
-    func test_muteKey_withChangedMute_keepsRendererMute() async throws {
-        let controller = try await connectedController()
-        try await waitFor { controller.isMuted == false }
+    func test_volumeKey_movingVolumeByOne_trustsVolume() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
 
+        lan.volumeLevel = 20
+        await controller.sendAndRefresh(.volDown)
+        XCTAssertEqual(controller.volume, 20)
+        controller.stop()
+    }
+
+    func test_volumeKey_unchangedVolume_staysHidden() async throws {
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_volumeKey_movingVolumeInWrongDirectionOrByMoreThanOne_staysHidden() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 19
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        lan.volumeLevel = 25
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+        controller.stop()
+    }
+
+    func test_volumeKey_atLimits_provesTheRendererOnlyWhenItMovesInward() async throws {
+        lan.volumeLevel = 100
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
+
+        lan.volumeLevel = 99
+        await controller.sendAndRefresh(.volDown)
+        XCTAssertEqual(controller.volume, 99)
+        controller.stop()
+    }
+
+    func test_muteKey_flippingMute_trustsMute() async throws {
+        let controller = try await settledController()
         lan.muted = true
         await controller.sendAndRefresh(.mute)
         XCTAssertEqual(controller.isMuted, true)
+        XCTAssertNil(controller.volume)
         controller.stop()
     }
 
-    func test_setVolume_clampsAndForwards() async throws {
-        let controller = try await connectedController()
+    func test_muteKey_unchangedMute_staysHidden() async throws {
+        let controller = try await settledController()
+        await controller.sendAndRefresh(.mute)
+        XCTAssertNil(controller.isMuted)
+        controller.stop()
+    }
+
+    func test_reconnect_forgetsTrust() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
+
+        controller.start(ip: "192.168.1.10")
+        try await waitFor { controller.volume == nil && controller.state == .connected }
+        controller.stop()
+    }
+
+    func test_setVolume_trustedRenderer_forwardsClampedLevel() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+
         controller.setVolume(140)
         try await waitFor { controller.volume == 100 }
         XCTAssertEqual(lan.setVolumeCalls, [100])
+        controller.stop()
+    }
+
+    func test_setVolumeFailure_stopsTrustingVolumeForTheConnection() async throws {
+        let controller = try await settledController()
+        lan.volumeLevel = 21
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertEqual(controller.volume, 21)
+
+        lan.setVolumeFails = true
+        controller.setVolume(50)
+        try await waitFor { controller.volume == nil }
+
+        lan.volumeLevel = 22
+        await controller.sendAndRefresh(.volUp)
+        XCTAssertNil(controller.volume)
         controller.stop()
     }
 
