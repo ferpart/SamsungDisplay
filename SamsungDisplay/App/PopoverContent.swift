@@ -65,27 +65,28 @@ struct PopoverContent: View {
                     Slider(value: sliderBinding, in: 0...100, onEditingChanged: sliderEditingChanged)
                     Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
                 }
-            } else {
-                HStack(spacing: 10) {
-                    Button { controller.send(.volDown) } label: {
-                        Label("Vol-", systemImage: "speaker.wave.1.fill").frame(maxWidth: .infinity)
-                    }
-                    Button { controller.send(.volUp) } label: {
-                        Label("Vol+", systemImage: "speaker.wave.3.fill").frame(maxWidth: .infinity)
-                    }
-                }
-                .buttonStyle(.glass)
-                .disabled(!isConnected)
             }
-            Button { controller.send(.mute) } label: {
-                Label(controller.isMuted == true ? "Unmute" : "Mute",
-                      systemImage: controller.isMuted == true ? "speaker.slash.fill" : "speaker.fill")
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 10) {
+                soundButton(controller.isMuted == true ? "Unmute" : "Mute",
+                            systemImage: controller.isMuted == true ? "speaker.slash.fill" : "speaker.fill",
+                            key: .mute)
+                soundButton("Vol-", systemImage: "speaker.minus.fill", key: .volDown)
+                soundButton("Vol+", systemImage: "speaker.plus.fill", key: .volUp)
             }
             .buttonStyle(.glass)
             .disabled(!isConnected)
         }
         .glassCard()
+    }
+
+    private func soundButton(_ title: String, systemImage: String, key: SamsungCommand.Key) -> some View {
+        Button { controller.send(key) } label: {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.iconOnly)
+                .frame(maxWidth: .infinity)
+        }
+        .help(title)
+        .accessibilityLabel(title)
     }
 
     private var setUpCard: some View {
