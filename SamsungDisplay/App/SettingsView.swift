@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var controller: ConnectionController
     @Bindable var permission: MediaKeyPermission
+    var preferences: AppPreferences = .shared
     @State private var discovery = MonitorDiscovery()
     @State private var ipDraft = ""
     @State private var audioOutputName: String?
@@ -53,7 +54,7 @@ struct SettingsView: View {
                 Text("Same name as a connected display").tag(String?.none)
                 ForEach(audioOutputs, id: \.self) { Text($0).tag(String?.some($0)) }
             }
-            .onChange(of: audioOutputName) { _, name in AppPreferences.shared.audioOutputName = name }
+            .onChange(of: audioOutputName) { _, name in preferences.audioOutputName = name }
             Text("The keys control the monitor only when this output is the macOS output device.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -111,8 +112,8 @@ struct SettingsView: View {
     }
 
     private func load() {
-        ipDraft = AppPreferences.shared.monitorIP ?? ""
-        audioOutputName = AppPreferences.shared.audioOutputName
+        ipDraft = preferences.monitorIP ?? ""
+        audioOutputName = preferences.audioOutputName
         audioOutputs = AudioOutputDevices.names()
         if let audioOutputName, !audioOutputs.contains(audioOutputName) { audioOutputs.append(audioOutputName) }
         launchAtLogin = LaunchAtLogin.isEnabled

@@ -6,8 +6,14 @@ struct OnboardingView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @State private var discovery = MonitorDiscovery()
     @State private var ipDraft = ""
-    @State private var storedIP = AppPreferences.shared.monitorIP
+    @State private var storedIP: String?
     @State private var keysSkipped = false
+
+    init(controller: ConnectionController, permission: MediaKeyPermission, preferences: AppPreferences = .shared) {
+        self.controller = controller
+        self.permission = permission
+        _storedIP = State(initialValue: preferences.monitorIP)
+    }
 
     private var step: OnboardingStep {
         OnboardingStep.current(

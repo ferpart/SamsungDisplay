@@ -38,7 +38,7 @@ struct PopoverContent: View {
                     } else {
                         Circle().fill(statusColor).frame(width: 8, height: 8)
                     }
-                    Text(controller.statusMessage).font(.caption).foregroundStyle(.secondary)
+                    Text(statusText).font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer()
@@ -165,6 +165,10 @@ struct PopoverContent: View {
             try? await Task.sleep(for: .seconds(1))
             if !isDragging { draftLevel = nil }
         }
+    }
+
+    private var statusText: String {
+        controller.state == .noIP ? "Not set up" : controller.statusMessage
     }
 
     private var statusColor: Color {
