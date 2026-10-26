@@ -25,7 +25,7 @@ struct SettingsView: View {
             .padding(20)
         }
         .frame(minWidth: 480, idealWidth: 520, minHeight: 520, idealHeight: 700)
-        .containerBackground(.thinMaterial, for: .window)
+        .glassWindowBackground()
         .onAppear(perform: load)
     }
 

@@ -33,7 +33,7 @@ struct OnboardingView: View {
         }
         .padding(24)
         .frame(width: 460)
-        .containerBackground(.thinMaterial, for: .window)
+        .glassWindowBackground()
         .onAppear { NSApp.activate() }
         .task {
             while !Task.isCancelled {

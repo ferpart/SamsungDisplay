@@ -15,7 +15,7 @@ struct RemoteView: View {
         }
         .padding(14)
         .frame(width: 280)
-        .containerBackground(.thinMaterial, for: .window)
+        .glassWindowBackground()
         .onAppear { NSApp.activate() }
         .task {
             while !Task.isCancelled {
