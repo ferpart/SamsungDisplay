@@ -4,17 +4,24 @@ struct RemoteView: View {
     @Bindable var controller: ConnectionController
 
     private var isConnected: Bool { controller.state == .connected }
+    private var isOn: Bool { controller.powerState == .on }
 
     var body: some View {
-        GlassEffectContainer(spacing: 12) {
-            VStack(spacing: 12) {
-                powerCard
-                SoundButtonRow(controller: controller).glassCard()
-                inputCard
-                RemotePad(controller: controller)
+        GlassEffectContainer(spacing: 4) {
+            VStack(spacing: 14) {
+                header
+                SoundButtonRow(controller: controller, diameter: 34)
+                RemotePad(controller: controller).padding(.top, 4)
+                Divider()
+                VStack(spacing: 2) {
+                    MenuRow(title: "Source", systemImage: "rectangle.on.rectangle") { controller.openInputSourceMenu() }
+                    MenuRow(title: "Next HDMI input", systemImage: "rectangle.2.swap") { controller.nextHDMIInput() }
+                }
+                .padding(.horizontal, -8)
+                .disabled(!isConnected)
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(width: 280)
         .glassWindowBackground()
         .onAppear { NSApp.activate() }
@@ -26,32 +33,17 @@ struct RemoteView: View {
         }
     }
 
-    private var powerCard: some View {
+    private var header: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Power").font(.headline)
-                Text(controller.powerState?.label ?? "Unknown").font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(controller.monitorName ?? "Samsung monitor").font(.headline).lineLimit(1)
+                HStack(spacing: 5) {
+                    Circle().fill(isOn ? Color.green : .secondary).frame(width: 7, height: 7)
+                    Text(controller.powerState?.label ?? "Unknown").font(.caption).foregroundStyle(.secondary)
+                }
             }
             Spacer()
-            Button { controller.togglePower() } label: {
-                Label(controller.powerState == .on ? "Power off" : "Power on", systemImage: "power")
-            }
-            .buttonStyle(.glass)
+            RoundIconButton(systemImage: "power", label: isOn ? "Power off" : "Power on", diameter: 34) { controller.togglePower() }
         }
-        .glassCard()
-    }
-
-    private var inputCard: some View {
-        VStack(spacing: 10) {
-            Button { controller.openInputSourceMenu() } label: {
-                Label("Source", systemImage: "rectangle.on.rectangle").frame(maxWidth: .infinity)
-            }
-            Button { controller.nextHDMIInput() } label: {
-                Label("Next HDMI input", systemImage: "arrow.triangle.2.circlepath").frame(maxWidth: .infinity)
-            }
-        }
-        .buttonStyle(.glass)
-        .disabled(!isConnected)
-        .glassCard()
     }
 }
