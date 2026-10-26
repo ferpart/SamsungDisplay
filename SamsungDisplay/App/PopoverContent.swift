@@ -66,27 +66,9 @@ struct PopoverContent: View {
                     Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
                 }
             }
-            HStack(spacing: 10) {
-                soundButton(controller.isMuted == true ? "Unmute" : "Mute",
-                            systemImage: controller.isMuted == true ? "speaker.slash.fill" : "speaker.fill",
-                            key: .mute)
-                soundButton("Vol-", systemImage: "speaker.minus.fill", key: .volDown)
-                soundButton("Vol+", systemImage: "speaker.plus.fill", key: .volUp)
-            }
-            .buttonStyle(.glass)
-            .disabled(!isConnected)
+            SoundButtonRow(controller: controller)
         }
         .glassCard()
-    }
-
-    private func soundButton(_ title: String, systemImage: String, key: SamsungCommand.Key) -> some View {
-        Button { controller.send(key) } label: {
-            Label(title, systemImage: systemImage)
-                .labelStyle(.iconOnly)
-                .frame(maxWidth: .infinity)
-        }
-        .help(title)
-        .accessibilityLabel(title)
     }
 
     private var setUpCard: some View {

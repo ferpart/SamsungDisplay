@@ -9,6 +9,7 @@ struct RemoteView: View {
         GlassEffectContainer(spacing: 12) {
             VStack(spacing: 12) {
                 powerCard
+                SoundButtonRow(controller: controller).glassCard()
                 inputCard
                 RemotePad(controller: controller)
             }

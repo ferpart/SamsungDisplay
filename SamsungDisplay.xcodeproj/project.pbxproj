@@ -26,6 +26,7 @@
 		6D701F16FAFAE70AFB418BB1 /* MonitorDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */; };
 		6F0728C810E1D4AE10ED1F98 /* SamsungWSActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4DE6E8416BE3393674D38 /* SamsungWSActor.swift */; };
 		6F73D53567249FD61FA53AB6 /* SamsungAuthResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA106FF43288C01EB340C37 /* SamsungAuthResponseTests.swift */; };
+		7097A2BF5F841AD3AD80D2EB /* SoundButtonRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9057DA4385DC013099ABEAD /* SoundButtonRow.swift */; };
 		72E07EE84FA5E573E7B17274 /* SamsungCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E248182471EBB60F54F76DF /* SamsungCommand.swift */; };
 		74486F91B01E1D27BB1BC246 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41B5912BEB1C77D5FF6853A /* GlassCard.swift */; };
 		7795BB70007A34A20FA4A620 /* MediaKeyEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F10B9771A80C7BC80DD680 /* MediaKeyEvent.swift */; };
@@ -136,6 +137,7 @@
 		B0D3FEC251721813B42517F1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B23201C841AB85A3305115C3 /* PermissionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsView.swift; sourceTree = "<group>"; };
 		B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoPlistTests.swift; sourceTree = "<group>"; };
+		B9057DA4385DC013099ABEAD /* SoundButtonRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundButtonRow.swift; sourceTree = "<group>"; };
 		BA711EABBB2AF6A0506E76BC /* SamsungDisplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SamsungDisplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0D521645623879EBD5000B3 /* SamsungTLSDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungTLSDelegate.swift; sourceTree = "<group>"; };
 		C7DD070ABFC8BE298C93CBC4 /* OnboardingStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStep.swift; sourceTree = "<group>"; };
@@ -291,6 +293,7 @@
 				77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */,
 				EA8DD97CB812A25BABF82A29 /* SettingsView.swift */,
 				D2BB152106B56F576CF91C82 /* SliderThrottle.swift */,
+				B9057DA4385DC013099ABEAD /* SoundButtonRow.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -451,6 +454,7 @@
 				6F0728C810E1D4AE10ED1F98 /* SamsungWSActor.swift in Sources */,
 				A6E3E0207E5907B4BB8AF925 /* SettingsView.swift in Sources */,
 				A7467CAE9ECD01FB2178053B /* SliderThrottle.swift in Sources */,
+				7097A2BF5F841AD3AD80D2EB /* SoundButtonRow.swift in Sources */,
 				DB87D67A3A46F6976A6FFCFA /* TokenStore.swift in Sources */,
 				93679F00BFD52309A58B60DC /* VolumeKeyGate.swift in Sources */,
 				E4F0E24ECD42763BE8B4ECF9 /* VolumeKeyRouter.swift in Sources */,
