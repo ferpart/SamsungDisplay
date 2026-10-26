@@ -15,6 +15,7 @@
 		2F49AF37DCF0DB5E30B0E7FE /* RemoteKeyMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49728B4CE83EA861C40A74FC /* RemoteKeyMappingTests.swift */; };
 		3DA4F392233ABA0A5862DA20 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5671CFE904DED2F980B6FC4E /* ConnectionState.swift */; };
 		406C45401AA5CD7200999B81 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A44A9A4976802B805C96AD /* OnboardingView.swift */; };
+		40B07CDE682A9765CE4C21E6 /* GlassControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */; };
 		417073FBF952FC6995C012E4 /* WakeOnLAN.swift in Sources */ = {isa = PBXBuildFile; fileRef = E353643AED1B18B46D411968 /* WakeOnLAN.swift */; };
 		4F0F43D36E15EBF47986EFEE /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23201C841AB85A3305115C3 /* PermissionsView.swift */; };
 		59F5ADEB6C9166ADF600A6A2 /* MonitorPickerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */; };
@@ -143,6 +144,7 @@
 		E353643AED1B18B46D411968 /* WakeOnLAN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeOnLAN.swift; sourceTree = "<group>"; };
 		EA8DD97CB812A25BABF82A29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		EBB82FBF79E8EF4F50E0FE05 /* DefaultOutputObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultOutputObserver.swift; sourceTree = "<group>"; };
+		EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassControls.swift; sourceTree = "<group>"; };
 		EF9F34DC6906F68CC0DEFD59 /* MonitorDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorDiscovery.swift; sourceTree = "<group>"; };
 		F77BD7AA74336571615DB52B /* RemoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteView.swift; sourceTree = "<group>"; };
 		F7DE52459EDFBC0CA0E2AE7F /* SamsungLANClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungLANClient.swift; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 			children = (
 				2D42E23E164A9FC5CD70966F /* AudioOutputDevices.swift */,
 				A41B5912BEB1C77D5FF6853A /* GlassCard.swift */,
+				EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */,
 				07E2DB242E131D8FD713EA6A /* LaunchAtLogin.swift */,
 				315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */,
 				B23201C841AB85A3305115C3 /* PermissionsView.swift */,
@@ -406,6 +409,7 @@
 				3DA4F392233ABA0A5862DA20 /* ConnectionState.swift in Sources */,
 				7E88C3BE43F1F78867A3B605 /* DefaultOutputObserver.swift in Sources */,
 				74486F91B01E1D27BB1BC246 /* GlassCard.swift in Sources */,
+				40B07CDE682A9765CE4C21E6 /* GlassControls.swift in Sources */,
 				DAFF2F7F9255254E4D2072B3 /* LaunchAtLogin.swift in Sources */,
 				7795BB70007A34A20FA4A620 /* MediaKeyEvent.swift in Sources */,
 				5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */,
