@@ -11,6 +11,17 @@ final class SamsungCommandTests: XCTestCase {
         XCTAssertEqual(SamsungCommand.Key.mute.rawValue, "KEY_MUTE")
     }
 
+    func test_remotePadKeyRawValues_matchSamsungTizenStrings() {
+        XCTAssertEqual(SamsungCommand.Key.up.rawValue, "KEY_UP")
+        XCTAssertEqual(SamsungCommand.Key.down.rawValue, "KEY_DOWN")
+        XCTAssertEqual(SamsungCommand.Key.left.rawValue, "KEY_LEFT")
+        XCTAssertEqual(SamsungCommand.Key.right.rawValue, "KEY_RIGHT")
+        XCTAssertEqual(SamsungCommand.Key.enter.rawValue, "KEY_ENTER")
+        XCTAssertEqual(SamsungCommand.Key.back.rawValue, "KEY_RETURN")
+        XCTAssertEqual(SamsungCommand.Key.home.rawValue, "KEY_HOME")
+        XCTAssertEqual(SamsungCommand.Key.source.rawValue, "KEY_SOURCE")
+    }
+
     // MARK: - JSON shape
 
     /// Decode encoded JSON back into a dictionary so we can assert fields by name
