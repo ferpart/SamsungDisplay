@@ -5,9 +5,6 @@ struct PopoverContent: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismiss) private var dismiss
     @Bindable var controller: ConnectionController
-    @State private var draftLevel: Double?
-    @State private var isDragging = false
-    @State private var throttle = SliderThrottle()
 
     private var isConnected: Bool { controller.state == .connected }
 
@@ -48,27 +45,13 @@ struct PopoverContent: View {
 
     private var controls: some View {
         VStack(spacing: 12) {
-            volumeCard
+            SoundButtonRow(controller: controller).glassCard()
             Button { open("remote") } label: {
                 Label("Remote", systemImage: "av.remote").frame(maxWidth: .infinity)
             }
             .buttonStyle(.glass)
             .glassCard()
         }
-    }
-
-    private var volumeCard: some View {
-        VStack(spacing: 10) {
-            if controller.volume != nil {
-                HStack(spacing: 8) {
-                    Image(systemName: "speaker.fill").foregroundStyle(.secondary)
-                    Slider(value: sliderBinding, in: 0...100, onEditingChanged: sliderEditingChanged)
-                    Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
-                }
-            }
-            SoundButtonRow(controller: controller)
-        }
-        .glassCard()
     }
 
     private var setUpCard: some View {
@@ -99,26 +82,6 @@ struct PopoverContent: View {
                 .keyboardShortcut("q", modifiers: [.command])
         }
         .buttonStyle(.glass)
-    }
-
-    private var sliderBinding: Binding<Double> {
-        Binding(
-            get: { draftLevel ?? Double(controller.volume ?? 0) },
-            set: { value in
-                draftLevel = value
-                if let level = throttle.submit(Int(value.rounded()), at: .now) { controller.setVolume(level) }
-            }
-        )
-    }
-
-    private func sliderEditingChanged(_ editing: Bool) {
-        isDragging = editing
-        guard !editing else { return }
-        if let level = throttle.flush(at: .now) { controller.setVolume(level) }
-        Task {
-            try? await Task.sleep(for: .seconds(1))
-            if !isDragging { draftLevel = nil }
-        }
     }
 
     private var statusText: String {

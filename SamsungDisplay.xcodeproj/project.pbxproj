@@ -45,7 +45,6 @@
 		A171918531615BE7251315B2 /* SamsungTLSDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D521645623879EBD5000B3 /* SamsungTLSDelegate.swift */; };
 		A2BB3460C3F93F8FF5F4E86B /* NetworkPathObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86AE0409CD6457042D36556 /* NetworkPathObserver.swift */; };
 		A6E3E0207E5907B4BB8AF925 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA8DD97CB812A25BABF82A29 /* SettingsView.swift */; };
-		A7467CAE9ECD01FB2178053B /* SliderThrottle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BB152106B56F576CF91C82 /* SliderThrottle.swift */; };
 		AC2DFC77546B58A4C0F65C67 /* TapRepairTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CEC04F521C24783E7066F2 /* TapRepairTests.swift */; };
 		AF159A7226BFD86E380A14C5 /* SamsungDisplayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */; };
 		B2C3AFCDDD340D2B1D6A1B99 /* VolumeOSD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3CF39F021E59AF446C6D17 /* VolumeOSD.swift */; };
@@ -69,7 +68,6 @@
 		E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */; };
 		EA47C8C8B136348AF8C1188A /* SamsungURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B106AAE2D14C273BD988B67 /* SamsungURL.swift */; };
 		ECBDFCD63E26D87466917654 /* TokenStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */; };
-		EFF3ADFCBBB548392725EE48 /* SliderThrottleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF2FA9ECE45FDC2403AFBD5E /* SliderThrottleTests.swift */; };
 		F32779B22D9062FC610BFB97 /* FakeLANDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90322D32DA33BBFAF5B45FE2 /* FakeLANDriver.swift */; };
 		FE46D8A526BD582357A97313 /* SamsungURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */; };
 /* End PBXBuildFile section */
@@ -138,8 +136,6 @@
 		C0D521645623879EBD5000B3 /* SamsungTLSDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungTLSDelegate.swift; sourceTree = "<group>"; };
 		C7DD070ABFC8BE298C93CBC4 /* OnboardingStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStep.swift; sourceTree = "<group>"; };
 		CEF4DE6E8416BE3393674D38 /* SamsungWSActor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungWSActor.swift; sourceTree = "<group>"; };
-		CF2FA9ECE45FDC2403AFBD5E /* SliderThrottleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderThrottleTests.swift; sourceTree = "<group>"; };
-		D2BB152106B56F576CF91C82 /* SliderThrottle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SliderThrottle.swift; sourceTree = "<group>"; };
 		D510519D1127A133605E85A0 /* RemoteKeyMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteKeyMapping.swift; sourceTree = "<group>"; };
 		D5BB2A75FAAE59E1971CEC2F /* AppPreferencesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferencesTests.swift; sourceTree = "<group>"; };
 		DA9B28DD9059270BCCAC1132 /* SamsungAuthResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungAuthResponse.swift; sourceTree = "<group>"; };
@@ -287,7 +283,6 @@
 				F77BD7AA74336571615DB52B /* RemoteView.swift */,
 				77142F5BF1ED7C6D01D7CC3D /* SamsungDisplayApp.swift */,
 				EA8DD97CB812A25BABF82A29 /* SettingsView.swift */,
-				D2BB152106B56F576CF91C82 /* SliderThrottle.swift */,
 				B9057DA4385DC013099ABEAD /* SoundButtonRow.swift */,
 			);
 			path = App;
@@ -320,7 +315,6 @@
 				07CDEDAF4A771FF738C121FA /* SamsungTLSDelegateTests.swift */,
 				AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */,
 				254A9F77245057A0D6DC8294 /* SamsungWSActorTests.swift */,
-				CF2FA9ECE45FDC2403AFBD5E /* SliderThrottleTests.swift */,
 				DAEEAB9375E62EB59213E0AC /* SSDPResponseTests.swift */,
 				A5CEC04F521C24783E7066F2 /* TapRepairTests.swift */,
 				889F184AEBC4D2274B91C8E7 /* TokenStoreTests.swift */,
@@ -446,7 +440,6 @@
 				EA47C8C8B136348AF8C1188A /* SamsungURL.swift in Sources */,
 				6F0728C810E1D4AE10ED1F98 /* SamsungWSActor.swift in Sources */,
 				A6E3E0207E5907B4BB8AF925 /* SettingsView.swift in Sources */,
-				A7467CAE9ECD01FB2178053B /* SliderThrottle.swift in Sources */,
 				7097A2BF5F841AD3AD80D2EB /* SoundButtonRow.swift in Sources */,
 				DB87D67A3A46F6976A6FFCFA /* TokenStore.swift in Sources */,
 				93679F00BFD52309A58B60DC /* VolumeKeyGate.swift in Sources */,
@@ -478,7 +471,6 @@
 				98F06DEC481892982440A582 /* SamsungTLSDelegateTests.swift in Sources */,
 				FE46D8A526BD582357A97313 /* SamsungURLTests.swift in Sources */,
 				BA6595BA9E578EC4EF2F1999 /* SamsungWSActorTests.swift in Sources */,
-				EFF3ADFCBBB548392725EE48 /* SliderThrottleTests.swift in Sources */,
 				981E898055F6054FAB03988D /* SpyWSDriver.swift in Sources */,
 				AC2DFC77546B58A4C0F65C67 /* TapRepairTests.swift in Sources */,
 				ECBDFCD63E26D87466917654 /* TokenStoreTests.swift in Sources */,
