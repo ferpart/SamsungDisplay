@@ -36,6 +36,7 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         var nextConnectOutcome: ConnectOutcome = .success(token: "spy-token")
         var nextSendKeyError: (any Error)? = nil
         var pendingClose: CheckedContinuation<Void, any Error>? = nil
+        var closeErrorBeforeWait: (any Error)? = nil
     }
 
     private let state = OSAllocatedUnfairLock<State>(initialState: State())
@@ -99,7 +100,12 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
     func waitForClose() async throws {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, any Error>) in
-                state.withLock { $0.pendingClose = cont }
+                let earlyError = state.withLock { s -> (any Error)? in
+                    defer { s.closeErrorBeforeWait = nil }
+                    if s.closeErrorBeforeWait == nil { s.pendingClose = cont }
+                    return s.closeErrorBeforeWait
+                }
+                if let earlyError { cont.resume(throwing: earlyError) }
             }
         } onCancel: {
             let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
@@ -118,6 +124,7 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
             let p = s.pendingClose
             s.pendingClose = nil
+            if p == nil { s.closeErrorBeforeWait = error }
             return p
         }
         parked?.resume(throwing: error)
