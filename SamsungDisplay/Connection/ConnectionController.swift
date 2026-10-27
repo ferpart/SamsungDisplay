@@ -104,7 +104,7 @@ final class ConnectionController {
         do {
             try await ws.sendKey(key)
         } catch {
-            append("send \(key.rawValue) failed: \(error)")
+            append("send \(key.rawValue) failed: \(error.redactedDescription)")
         }
     }
 
@@ -174,7 +174,7 @@ final class ConnectionController {
                 start(ip: ip)
             }
         } catch {
-            append("wake-on-LAN failed: \(error)")
+            append("wake-on-LAN failed: \(error.redactedDescription)")
         }
     }
 
@@ -272,7 +272,7 @@ final class ConnectionController {
                 let newToken = try await ws.connect(to: ip, token: token)
                 if newToken != token {
                     do { try tokens.save(newToken) }
-                    catch { append("token save failed: \(error)") }
+                    catch { append("token save failed: \(error.redactedDescription)") }
                 }
                 state = .connected
                 statusMessage = "Connected"
@@ -291,7 +291,7 @@ final class ConnectionController {
                 } catch is CancellationError {
                     return    // user action or path-lost cancelled us
                 } catch {
-                    append("connection lost: \(error)")
+                    append("connection lost: \(error.redactedDescription)")
                     // Fall through to the backoff + retry below
                 }
             } catch SamsungWSError.unauthorized {
@@ -302,7 +302,7 @@ final class ConnectionController {
             } catch is CancellationError {
                 return
             } catch {
-                append("connect failed: \(error)")
+                append("connect failed: \(error.redactedDescription)")
             }
 
             let delay = policy.nextDelay(after: lastDelay)
@@ -319,7 +319,7 @@ final class ConnectionController {
             monitorName = info.name
             powerState = PowerState(apiValue: info.powerState)
         } catch {
-            append("device info failed: \(error)")
+            append("device info failed: \(error.redactedDescription)")
         }
     }
 

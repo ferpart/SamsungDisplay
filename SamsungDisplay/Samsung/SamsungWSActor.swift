@@ -306,7 +306,7 @@ actor SamsungWSActor {
             do {
                 message = try await task.receive()
             } catch {
-                logger.error("receive failed: \(String(describing: error), privacy: .public)")
+                logger.error("receive failed: \(error.redactedDescription, privacy: .public)")
                 throw error
             }
 
