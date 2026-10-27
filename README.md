@@ -21,23 +21,9 @@ SamsungDisplay fixes this in two ways:
 
 The Mac volume and mute keys control the monitor, with an on-screen indicator. This works only when the monitor is the macOS audio output.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/osd-dark.jpg">
-  <img src="docs/images/osd-light.jpg" alt="The volume indicator on the screen" width="228">
-</picture>
-
-### Menu bar
-
-The menu bar icon shows the connection state. Its bars are full when the app is connected.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/menubar-dark.jpg">
-  <img src="docs/images/menubar-light.jpg" alt="The menu bar icon when connected" width="235">
-</picture>
-
 ### Popover
 
-The popover has Mute, Volume down, and Volume up buttons. It opens the Remote window and Settings.
+The menu bar icon shows the connection state. Its bars are full when the app is connected. The popover has Mute, Volume down, and Volume up buttons. It opens the Remote window and Settings.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/popover-dark.jpg">
