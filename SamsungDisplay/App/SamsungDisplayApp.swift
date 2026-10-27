@@ -43,6 +43,7 @@ final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
     private(set) lazy var volumeKeys = VolumeKeyRouter(controller: controller)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.appearance = AppPreferences.shared.appearance.nsAppearance
         // The unit tests use this app as their host and must not reach the real monitor.
         guard !AppLaunch.isRunningTests else { return }
         controller.bootstrap()

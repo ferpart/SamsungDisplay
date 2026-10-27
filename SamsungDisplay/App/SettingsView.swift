@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var audioOutputName: String?
     @State private var audioOutputs: [String] = []
     @State private var launchAtLogin = false
+    @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
 
     var body: some View {
@@ -17,6 +18,7 @@ struct SettingsView: View {
                 VStack(spacing: 16) {
                     monitorCard
                     audioCard
+                    appearanceCard
                     startupCard
                     permissionsCard
                     logsCard
@@ -58,6 +60,18 @@ struct SettingsView: View {
             Text("The keys control the monitor only when this output is the macOS output device.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+        .glassCard()
+    }
+
+    private var appearanceCard: some View {
+        Picker("Appearance", selection: $appearance) {
+            ForEach(AppearanceMode.allCases, id: \.self) { Text($0.title).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .onChange(of: appearance) { _, mode in
+            preferences.appearance = mode
+            NSApp.appearance = mode.nsAppearance
         }
         .glassCard()
     }
@@ -117,5 +131,6 @@ struct SettingsView: View {
         audioOutputs = AudioOutputDevices.names()
         if let audioOutputName, !audioOutputs.contains(audioOutputName) { audioOutputs.append(audioOutputName) }
         launchAtLogin = LaunchAtLogin.isEnabled
+        appearance = preferences.appearance
     }
 }

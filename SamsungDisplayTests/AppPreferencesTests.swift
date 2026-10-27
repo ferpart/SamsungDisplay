@@ -49,4 +49,22 @@ final class AppPreferencesTests: XCTestCase {
     func test_sharedInstance_usesStandardDefaults() {
         XCTAssertTrue(AppPreferences.shared.defaults === UserDefaults.standard)
     }
+
+    func test_appearance_defaultsToAutomaticAndRoundTrips() {
+        XCTAssertEqual(prefs.appearance, .automatic)
+        prefs.appearance = .dark
+        XCTAssertEqual(prefs.appearance, .dark)
+        XCTAssertEqual(suite.string(forKey: "appearance"), "dark")
+    }
+
+    func test_appearance_unknownStoredValueFallsBackToAutomatic() {
+        suite.set("sepia", forKey: "appearance")
+        XCTAssertEqual(prefs.appearance, .automatic)
+    }
+
+    func test_appearanceMode_mapsToNSAppearance() {
+        XCTAssertNil(AppearanceMode.automatic.nsAppearance)
+        XCTAssertEqual(AppearanceMode.light.nsAppearance?.name, .aqua)
+        XCTAssertEqual(AppearanceMode.dark.nsAppearance?.name, .darkAqua)
+    }
 }
