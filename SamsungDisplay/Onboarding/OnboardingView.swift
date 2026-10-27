@@ -120,7 +120,7 @@ struct OnboardingView: View {
             Label("All set", systemImage: "checkmark.circle.fill")
                 .font(.headline)
                 .foregroundStyle(.green)
-            Text("Use the speaker icon in the menu bar to control your monitor.")
+            Text("Use the monitor icon in the menu bar to control your monitor.")
                 .font(.callout)
             Button("Finish") { dismissWindow(id: "onboarding") }
                 .buttonStyle(.glassProminent)

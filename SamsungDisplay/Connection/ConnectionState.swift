@@ -18,15 +18,10 @@ enum ConnectionState: Sendable, Equatable {
 }
 
 extension ConnectionState {
-    /// SF Symbol name for the menu bar icon (CONN-05).
-    /// - `.connected`, `.connecting` -> `"speaker.wave.2.fill"`
-    ///   (the `.connecting` state animates via `.symbolEffect(.pulse)` applied
-    ///   at the view layer; the symbol itself is the same).
-    /// - `.disconnected`, `.noIP`, `.unauthorized` -> `"speaker.slash.fill"`
-    var menuBarSymbol: String {
+    var menuBarImage: String {
         switch self {
-        case .connected, .connecting: return "speaker.wave.2.fill"
-        case .disconnected, .noIP, .unauthorized: return "speaker.slash.fill"
+        case .connected, .connecting: "MenuBarConnected"
+        case .disconnected, .noIP, .unauthorized: "MenuBarDisconnected"
         }
     }
 }

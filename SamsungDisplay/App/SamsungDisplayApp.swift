@@ -6,7 +6,7 @@ struct SamsungDisplayApp: App {
     @NSApplicationDelegateAdaptor(SamsungDisplayAppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("SamsungDisplay", systemImage: appDelegate.controller.state.menuBarSymbol) {
+        MenuBarExtra("SamsungDisplay", image: appDelegate.controller.state.menuBarImage) {
             PopoverContent(controller: appDelegate.controller)
         }
         .menuBarExtraStyle(.window)

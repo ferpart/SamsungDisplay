@@ -32,6 +32,7 @@
 		72E07EE84FA5E573E7B17274 /* SamsungCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E248182471EBB60F54F76DF /* SamsungCommand.swift */; };
 		74486F91B01E1D27BB1BC246 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41B5912BEB1C77D5FF6853A /* GlassCard.swift */; };
 		7795BB70007A34A20FA4A620 /* MediaKeyEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F10B9771A80C7BC80DD680 /* MediaKeyEvent.swift */; };
+		78F03AC40A0BAEE37943A92A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9701B222D4988FC8D5180F3 /* Assets.xcassets */; };
 		7E88C3BE43F1F78867A3B605 /* DefaultOutputObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBB82FBF79E8EF4F50E0FE05 /* DefaultOutputObserver.swift */; };
 		81C175C566EC97ABD6E783A8 /* SamsungAuthResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA9B28DD9059270BCCAC1132 /* SamsungAuthResponse.swift */; };
 		81DB0A61F869A0197C01D172 /* OnboardingStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DD070ABFC8BE298C93CBC4 /* OnboardingStep.swift */; };
@@ -146,6 +147,7 @@
 		DB29B4F90848E8420883677C /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		DD1C10530D9DC374328146E3 /* SSDPResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSDPResponse.swift; sourceTree = "<group>"; };
 		E353643AED1B18B46D411968 /* WakeOnLAN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeOnLAN.swift; sourceTree = "<group>"; };
+		E9701B222D4988FC8D5180F3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EA8DD97CB812A25BABF82A29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		EBB82FBF79E8EF4F50E0FE05 /* DefaultOutputObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultOutputObserver.swift; sourceTree = "<group>"; };
 		EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassControls.swift; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				4E717EF98226861041C3AE79 /* AppIcon.icon */,
+				E9701B222D4988FC8D5180F3 /* Assets.xcassets */,
 				B0D3FEC251721813B42517F1 /* Info.plist */,
 				F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */,
 			);
@@ -411,6 +414,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4A2335FA51A57FEF63B3BAD3 /* AppIcon.icon in Resources */,
+				78F03AC40A0BAEE37943A92A /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

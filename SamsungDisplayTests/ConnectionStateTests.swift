@@ -3,12 +3,11 @@ import XCTest
 
 final class ConnectionStateTests: XCTestCase {
 
-    // CONN-05: menu bar symbol per state.
-    func test_menuBarSymbol_perCase() {
-        XCTAssertEqual(ConnectionState.connected.menuBarSymbol, "speaker.wave.2.fill")
-        XCTAssertEqual(ConnectionState.connecting.menuBarSymbol, "speaker.wave.2.fill")
-        XCTAssertEqual(ConnectionState.disconnected.menuBarSymbol, "speaker.slash.fill")
-        XCTAssertEqual(ConnectionState.noIP.menuBarSymbol, "speaker.slash.fill")
-        XCTAssertEqual(ConnectionState.unauthorized.menuBarSymbol, "speaker.slash.fill")
+    func test_menuBarImage_showsBarsOnlyWhileConnectedOrConnecting() {
+        XCTAssertEqual(ConnectionState.connected.menuBarImage, "MenuBarConnected")
+        XCTAssertEqual(ConnectionState.connecting.menuBarImage, "MenuBarConnected")
+        XCTAssertEqual(ConnectionState.disconnected.menuBarImage, "MenuBarDisconnected")
+        XCTAssertEqual(ConnectionState.noIP.menuBarImage, "MenuBarDisconnected")
+        XCTAssertEqual(ConnectionState.unauthorized.menuBarImage, "MenuBarDisconnected")
     }
 }
