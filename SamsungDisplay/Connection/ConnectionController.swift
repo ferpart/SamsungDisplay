@@ -209,13 +209,13 @@ final class ConnectionController {
     /// Sticky-deny recovery: drop the keychain token, then restart the loop.
     /// Reads token AFTER delete to confirm it's gone (RESEARCH.md Pitfall #4).
     func wipeTokenAndReconnect() {
-        tokens.delete()
-        append("token wiped")
         guard let ip = preferences.monitorIP, !ip.isEmpty else {
             state = .noIP
             statusMessage = "Not connected — set monitor IP in Settings"
             return
         }
+        tokens.delete(for: ip)
+        append("token wiped")
         start(ip: ip)
     }
 
@@ -274,11 +274,11 @@ final class ConnectionController {
         while !Task.isCancelled {
             state = .connecting
             statusMessage = "Reconnecting…"
-            let token = tokens.load()
+            let token = tokens.load(for: ip)
             do {
                 let newToken = try await ws.connect(to: ip, token: token)
                 if newToken != token {
-                    do { try tokens.save(newToken) }
+                    do { try tokens.save(newToken, for: ip) }
                     catch { append("token save failed: \(error.redactedDescription)") }
                 }
                 state = .connected

@@ -21,14 +21,11 @@ final class ConnectionControllerTests: XCTestCase {
         preferences = AppPreferences(defaults: defaults)
         // Unique keychain service per test run so we don't pollute the real
         // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
-        tokens = TokenStore(
-            service: "tests.SamsungDisplay.token.\(UUID().uuidString)",
-            account: "test"
-        )
+        tokens = TokenStore(service: "tests.SamsungDisplay.token.\(UUID().uuidString)")
     }
 
     override func tearDown() async throws {
-        tokens.delete()
+        tokens.deleteAll()
         defaults.removePersistentDomain(forName: suiteName)
         spy = nil
         lan = nil
@@ -144,14 +141,14 @@ final class ConnectionControllerTests: XCTestCase {
         preferences.monitorIP = "192.168.1.10"
         spy.nextConnectOutcome = .hang
 
-        try tokens.save("old-token")
-        XCTAssertEqual(tokens.load(), "old-token")
+        try tokens.save("old-token", for: "192.168.1.10")
+        XCTAssertEqual(tokens.load(for: "192.168.1.10"), "old-token")
 
         let controller = makeController()
         controller.wipeTokenAndReconnect()
 
         try await waitFor { self.spy.connectCalls.count == 1 }
-        XCTAssertNil(tokens.load(), "wipeTokenAndReconnect must delete the keychain item")
+        XCTAssertNil(tokens.load(for: "192.168.1.10"), "wipeTokenAndReconnect must delete the keychain item")
         XCTAssertEqual(spy.connectCalls.first?.ip, "192.168.1.10")
         XCTAssertNil(
             spy.connectCalls.first?.token,
@@ -338,6 +335,18 @@ final class ConnectionControllerTests: XCTestCase {
         controller.connect(to: "192.168.1.77")
         try await waitFor { controller.state == .connected }
         XCTAssertEqual(preferences.monitorIP, "192.168.1.77")
+        controller.stop()
+    }
+
+    func test_connectTo_newIP_doesNotSendTokenOfAnotherIP() async throws {
+        try tokens.save("token-for-old-ip", for: "192.168.1.10")
+        spy.nextConnectOutcome = .success(token: "token-for-new-ip")
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertNil(spy.connectCalls.first?.token)
+        XCTAssertEqual(tokens.load(for: "192.168.1.77"), "token-for-new-ip")
+        XCTAssertEqual(tokens.load(for: "192.168.1.10"), "token-for-old-ip")
         controller.stop()
     }
 

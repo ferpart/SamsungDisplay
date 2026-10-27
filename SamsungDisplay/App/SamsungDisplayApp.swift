@@ -46,6 +46,7 @@ final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
         NSApp.appearance = AppPreferences.shared.appearance.nsAppearance
         // The unit tests use this app as their host and must not reach the real monitor.
         guard !AppLaunch.isRunningTests else { return }
+        TokenStore.shared.deleteLegacyItem()
         controller.bootstrap()
         volumeKeys.start()
     }
