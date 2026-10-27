@@ -10,7 +10,7 @@ struct RemoteView: View {
         GlassEffectContainer(spacing: 4) {
             VStack(spacing: 14) {
                 header
-                SoundButtonRow(controller: controller, diameter: 34)
+                SoundButtonRow(controller: controller, height: 34)
                 RemotePad(controller: controller).padding(.top, 4)
                 Divider()
                 VStack(spacing: 2) {
