@@ -120,7 +120,10 @@ struct SettingsView: View {
             }
             Toggle("Check automatically", isOn: $automaticUpdateChecks)
                 .toggleStyle(.switch)
-                .onChange(of: automaticUpdateChecks) { _, enabled in preferences.automaticUpdateChecks = enabled }
+                .onChange(of: automaticUpdateChecks) { _, enabled in
+                    preferences.automaticUpdateChecks = enabled
+                    if enabled { Task { await updates.check(isAutomatic: true) } }
+                }
         }
     }
 
