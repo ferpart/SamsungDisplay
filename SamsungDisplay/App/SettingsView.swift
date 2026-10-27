@@ -37,6 +37,14 @@ struct SettingsView: View {
                 ipDraft = monitor.ip
                 controller.connect(to: monitor.ip)
             }
+            LabeledContent("Connection") {
+                if controller.isUserDisconnected {
+                    Button("Connect") { controller.reconnect() }
+                } else {
+                    Button("Disconnect") { controller.disconnect() }
+                        .disabled(controller.state == .noIP)
+                }
+            }
             LabeledContent("Pairing") {
                 Button("Wipe token and re-pair") { isConfirmingForget = true }
                     .alert("Forget the pairing?", isPresented: $isConfirmingForget) {

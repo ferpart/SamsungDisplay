@@ -66,11 +66,6 @@ struct PopoverContent: View {
         Divider().padding(.horizontal, 8)
         Text("Monitor").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.horizontal, 8)
         MenuRow(title: "Remote", systemImage: "av.remote", showsChevron: true) { open("remote") }
-        if controller.isUserDisconnected {
-            MenuRow(title: "Connect", systemImage: "antenna.radiowaves.left.and.right") { controller.reconnect() }
-        } else {
-            MenuRow(title: "Disconnect", systemImage: "antenna.radiowaves.left.and.right.slash") { controller.disconnect() }
-        }
     }
 
     private var setUpSection: some View {
