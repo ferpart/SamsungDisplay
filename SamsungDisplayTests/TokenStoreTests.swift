@@ -54,16 +54,22 @@ final class TokenStoreTests: XCTestCase {
         XCTAssertNil(sut.load(for: "192.0.2.11"))
     }
 
-    func test_deleteLegacyItem_removesOnlyTheDefaultAccount() throws {
+    func test_deleteLegacyItems_inFileKeychain_removesOnlyTheDefaultAccount() throws {
+        try XCTSkipIf(TokenStore.usesDataProtectionKeychain)
         try sut.save("legacy", for: "default")
         try sut.save("current", for: ip)
-        sut.deleteLegacyItem()
+        sut.deleteLegacyItems()
         XCTAssertNil(sut.load(for: "default"))
         XCTAssertEqual(sut.load(for: ip), "current")
     }
 
-    func test_storedItem_usesAccessibleAfterFirstUnlock() {
-        XCTAssertEqual(TokenStore.accessibility, kSecAttrAccessibleAfterFirstUnlock)
+    func test_accessibility_matchesKeychainKind() {
+        XCTAssertEqual(
+            TokenStore.accessibility,
+            TokenStore.usesDataProtectionKeychain
+                ? kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+                : kSecAttrAccessibleAfterFirstUnlock
+        )
     }
 
     func test_sharedSingleton_hasExpectedService() {

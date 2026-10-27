@@ -7,16 +7,19 @@ enum TokenStoreError: Error {
 
 /// Keychain-backed store for the Samsung auth token, with one item per monitor IP.
 ///
+/// Team-signed builds carry `keychain-access-groups` and use the data protection
+/// keychain. Ad-hoc builds cannot, so they use the file-based login keychain.
+///
 /// Tests construct instances with unique service names to avoid polluting
 /// the real keychain item.
 struct TokenStore {
     let service: String
 
-    /// The Keychain accessibility class applied to stored tokens. Exposed so
-    /// tests can assert the policy without relying on `SecItemCopyMatching`
-    /// returning the `pdmn` attribute (macOS does not include it in attribute
-    /// queries for generic password items).
-    nonisolated(unsafe) static let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlock
+    static let usesDataProtectionKeychain = hasEntitlement("keychain-access-groups")
+
+    static var accessibility: CFString {
+        usesDataProtectionKeychain ? kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly : kSecAttrAccessibleAfterFirstUnlock
+    }
 
     static let shared = TokenStore(service: "com.fp.SamsungDisplay.samsungToken")
     static let certificatePins = TokenStore(service: "com.fp.SamsungDisplay.certificatePin")
@@ -59,8 +62,16 @@ struct TokenStore {
         SecItemDelete(query as CFDictionary)
     }
 
-    func deleteLegacyItem() {
-        delete(for: Self.legacyAccount)
+    func deleteLegacyItems() {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+        ]
+        if !Self.usesDataProtectionKeychain {
+            query[kSecAttrAccount as String] = Self.legacyAccount
+        }
+        SecItemDelete(query as CFDictionary)
     }
 
     private func query(account: String?) -> [String: Any] {
@@ -69,6 +80,14 @@ struct TokenStore {
             kSecAttrService as String: service,
         ]
         query[kSecAttrAccount as String] = account
+        if Self.usesDataProtectionKeychain {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
         return query
+    }
+
+    private static func hasEntitlement(_ name: String) -> Bool {
+        guard let task = SecTaskCreateFromSelf(nil) else { return false }
+        return SecTaskCopyValueForEntitlement(task, name as CFString, nil) != nil
     }
 }
