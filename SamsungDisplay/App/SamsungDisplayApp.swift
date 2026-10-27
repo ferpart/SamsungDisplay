@@ -6,7 +6,7 @@ struct SamsungDisplayApp: App {
     @NSApplicationDelegateAdaptor(SamsungDisplayAppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("SamsungDisplay", image: appDelegate.controller.state.menuBarImage) {
+        MenuBarExtra("SamsungDisplay", image: appDelegate.controller.state.menuBarImage(animationStep: appDelegate.menuBarAnimator.step)) {
             PopoverContent(controller: appDelegate.controller)
         }
         .menuBarExtraStyle(.window)
@@ -40,13 +40,23 @@ enum AppLaunch {
 @MainActor
 final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
     let controller = ConnectionController()
+    let menuBarAnimator = MenuBarAnimator()
     private(set) lazy var volumeKeys = VolumeKeyRouter(controller: controller)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.appearance = AppPreferences.shared.appearance.nsAppearance
         // The unit tests use this app as their host and must not reach the real monitor.
         guard !AppLaunch.isRunningTests else { return }
+        animateMenuBarWhileConnecting()
         controller.bootstrap()
         volumeKeys.start()
+    }
+
+    private func animateMenuBarWhileConnecting() {
+        withObservationTracking {
+            menuBarAnimator.update(isConnecting: controller.state == .connecting)
+        } onChange: {
+            Task { @MainActor [weak self] in self?.animateMenuBarWhileConnecting() }
+        }
     }
 }
