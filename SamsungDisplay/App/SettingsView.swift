@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var controller: ConnectionController
     @Bindable var permission: MediaKeyPermission
+    var updates: UpdateChecker
     var preferences: AppPreferences = .shared
     @State private var discovery = MonitorDiscovery()
     @State private var ipDraft = ""
@@ -11,6 +12,7 @@ struct SettingsView: View {
     @State private var launchAtLogin = false
     @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
+    @State private var automaticUpdateChecks = true
     @State private var ipRejected = false
     @State private var isConfirmingForget = false
 
@@ -19,6 +21,7 @@ struct SettingsView: View {
             monitorSection
             volumeKeysSection
             generalSection
+            updatesSection
             Section("Permissions") {
                 PermissionsView(permission: permission)
             }
@@ -107,6 +110,35 @@ struct SettingsView: View {
         }
     }
 
+    private var updatesSection: some View {
+        Section("Updates") {
+            LabeledContent {
+                Button("Check for Updates") { Task { await updates.check() } }
+                    .disabled(updates.status == .checking)
+            } label: {
+                updateStatus
+            }
+            Toggle("Check automatically", isOn: $automaticUpdateChecks)
+                .toggleStyle(.switch)
+                .onChange(of: automaticUpdateChecks) { _, enabled in preferences.automaticUpdateChecks = enabled }
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updates.status {
+        case .idle: EmptyView()
+        case .checking: ProgressView().controlSize(.small)
+        case .upToDate: Text("SamsungDisplay is up to date").foregroundStyle(.secondary)
+        case .failed: Text("Could not check for updates").foregroundStyle(.red)
+        case .available(let release):
+            HStack {
+                Text("Version \(release.version) is available")
+                Button("Download") { NSWorkspace.shared.open(release.downloadURL) }
+            }
+        }
+    }
+
     private var logsSection: some View {
         Section {
             DisclosureGroup("Logs") {
@@ -146,5 +178,6 @@ struct SettingsView: View {
         if let audioOutputName, !audioOutputs.contains(audioOutputName) { audioOutputs.append(audioOutputName) }
         launchAtLogin = LaunchAtLogin.isEnabled
         appearance = preferences.appearance
+        automaticUpdateChecks = preferences.automaticUpdateChecks
     }
 }

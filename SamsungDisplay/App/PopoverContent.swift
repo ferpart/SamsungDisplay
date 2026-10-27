@@ -5,6 +5,7 @@ struct PopoverContent: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismiss) private var dismiss
     @Bindable var controller: ConnectionController
+    var updates: UpdateChecker
 
     var body: some View {
         GlassEffectContainer(spacing: 4) {
@@ -18,6 +19,12 @@ struct PopoverContent: View {
                 }
                 Divider().padding(.horizontal, 8)
                 VStack(spacing: 0) {
+                    if let release = updates.availableRelease {
+                        MenuRow(title: "Update available: \(release.version)", systemImage: "arrow.down.circle") {
+                            NSWorkspace.shared.open(release.downloadURL)
+                            dismiss()
+                        }
+                    }
                     MenuRow(title: "Settings…") { open("settings") }
                     MenuRow(title: "Quit SamsungDisplay") { NSApp.terminate(nil) }
                         .keyboardShortcut("q", modifiers: [.command])
