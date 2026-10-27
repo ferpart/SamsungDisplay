@@ -354,6 +354,58 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
+    // MARK: - User disconnect
+
+    func test_disconnect_stopsTheLoopAndClosesTheSocket() async throws {
+        let controller = try await connectedController()
+        controller.disconnect()
+        XCTAssertEqual(controller.state, .disconnected)
+        XCTAssertTrue(controller.isUserDisconnected)
+        try await waitFor { self.spy.disconnectCalls == 1 }
+    }
+
+    func test_disconnect_pathSatisfiedDoesNotReconnect() async throws {
+        let controller = try await connectedController()
+        let connects = spy.connectCalls.count
+        controller.disconnect()
+        path.firePathSatisfied()
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
+        XCTAssertEqual(controller.state, .disconnected)
+    }
+
+    func test_disconnect_pathLostDoesNotReconnect() async throws {
+        let controller = try await connectedController()
+        let connects = spy.connectCalls.count
+        controller.disconnect()
+        path.firePathLost()
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
+        XCTAssertEqual(controller.state, .disconnected)
+    }
+
+    func test_disconnect_duringBackoffStopsTheRetries() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .error(URLError(.timedOut))
+        let controller = makeController(policy: ReconnectPolicy(initial: .milliseconds(50), cap: .milliseconds(50), multiplier: 1))
+        controller.bootstrap()
+        try await waitFor { self.spy.connectCalls.count >= 1 }
+        controller.disconnect()
+        let connects = spy.connectCalls.count
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
+    }
+
+    func test_reconnect_afterDisconnect_connectsWithTheStoredIP() async throws {
+        let controller = try await connectedController()
+        controller.disconnect()
+        controller.reconnect()
+        XCTAssertFalse(controller.isUserDisconnected)
+        try await waitFor { controller.state == .connected }
+        XCTAssertEqual(spy.connectCalls.last?.ip, "192.168.1.10")
+        controller.stop()
+    }
+
     func test_powerOn_whenAPIAnswersStandby_sendsPowerKeyOverWebSocket() async throws {
         let controller = try await connectedController()
         lan.powerState = "standby"
