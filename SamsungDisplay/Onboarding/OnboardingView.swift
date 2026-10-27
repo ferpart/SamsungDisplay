@@ -27,7 +27,12 @@ struct OnboardingView: View {
     var body: some View {
         GlassEffectContainer(spacing: 16) {
             VStack(alignment: .leading, spacing: 16) {
-                Label("Set up SamsungDisplay", systemImage: "display").font(.title2.bold())
+                Label {
+                    Text("Set up SamsungDisplay")
+                } icon: {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
+                }
+                .font(.title2.bold())
                 content.glassCard()
             }
         }
