@@ -4,8 +4,8 @@ import XCTest
 final class WakeOnLANTests: XCTestCase {
 
     func test_magicPacket_isSixFFThenMACSixteenTimes() throws {
-        let packet = try XCTUnwrap(WakeOnLAN.magicPacket(mac: "02:00:00:00:00:01"))
-        let mac: [UInt8] = [0x04, 0xE4, 0xB6, 0x15, 0x4C, 0xD6]
+        let packet = try XCTUnwrap(WakeOnLAN.magicPacket(mac: "02:00:00:AB:CD:EF"))
+        let mac: [UInt8] = [0x02, 0x00, 0x00, 0xAB, 0xCD, 0xEF]
         XCTAssertEqual(packet.count, 102)
         XCTAssertEqual(Array(packet.prefix(6)), Array(repeating: 0xFF, count: 6))
         for repetition in 0..<16 {
@@ -15,12 +15,12 @@ final class WakeOnLANTests: XCTestCase {
     }
 
     func test_magicPacket_acceptsDashesAndLowercase() {
-        XCTAssertEqual(WakeOnLAN.magicPacket(mac: "04-e4-b6-15-4c-d6"), WakeOnLAN.magicPacket(mac: "02:00:00:00:00:01"))
+        XCTAssertEqual(WakeOnLAN.magicPacket(mac: "02-00-00-ab-cd-ef"), WakeOnLAN.magicPacket(mac: "02:00:00:AB:CD:EF"))
     }
 
     func test_magicPacket_rejectsInvalidMAC() {
-        XCTAssertNil(WakeOnLAN.magicPacket(mac: "04:E4:B6:15:4C"))
-        XCTAssertNil(WakeOnLAN.magicPacket(mac: "zz:E4:B6:15:4C:D6"))
+        XCTAssertNil(WakeOnLAN.magicPacket(mac: "02:00:00:AB:CD"))
+        XCTAssertNil(WakeOnLAN.magicPacket(mac: "zz:00:00:AB:CD:EF"))
         XCTAssertNil(WakeOnLAN.magicPacket(mac: ""))
     }
 }
