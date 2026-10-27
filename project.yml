@@ -17,6 +17,8 @@ settings:
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: "-"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
 targets:
   SamsungDisplay:
     type: application
