@@ -312,9 +312,6 @@ actor SamsungWSActor {
 
             switch message {
             case .string(let text):
-                #if DEBUG
-                logger.debug("frame: \(text, privacy: .public)")
-                #endif
                 if let resolved = try handleTextFrame(text, inputToken: inputToken) {
                     return resolved
                 }
