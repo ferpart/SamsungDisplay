@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Structure:
 ///     wss://<host>:8002/api/v2/channels/samsung.remote.control?name=<base64(appName)>
-/// then, if a paired token is available:
+/// then, on wss only, if a paired token is available:
 ///     &token=<token>
 ///
 /// The `name` query value must be the base64 encoding of the UTF-8 bytes of the
@@ -29,7 +29,7 @@ func samsungWebSocketURL(host: String, appName: String, token: String?, port: In
 
     let encodedName = Data(appName.utf8).base64EncodedString()
     var queryItems: [URLQueryItem] = [URLQueryItem(name: "name", value: encodedName)]
-    if let token, !token.isEmpty {
+    if let token, !token.isEmpty, components.scheme == "wss" {
         queryItems.append(URLQueryItem(name: "token", value: token))
     }
     components.queryItems = queryItems

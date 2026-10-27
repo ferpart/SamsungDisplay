@@ -80,6 +80,12 @@ final class SamsungURLTests: XCTestCase {
         XCTAssertEqual(url.port, 8001)
     }
 
+    func test_port8001_neverSendsToken() throws {
+        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123", port: 8001)
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        XCTAssertNil(components.queryItems?.first(where: { $0.name == "token" }))
+    }
+
     func test_fallback_tries8002Then8001() async throws {
         var tried: [Int] = []
         let port = try await firstSuccessfulPort(samsungRemotePorts) { port in
