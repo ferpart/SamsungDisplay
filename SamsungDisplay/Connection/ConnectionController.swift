@@ -212,7 +212,7 @@ final class ConnectionController {
         statusMessage = "Not connected — set monitor IP in Settings"
     }
 
-    /// Sticky-deny recovery: drop the keychain token, then restart the loop.
+    /// Sticky-deny recovery: drop the stored token, then restart the loop.
     /// Reads token AFTER delete to confirm it's gone (RESEARCH.md Pitfall #4).
     func wipeTokenAndReconnect() {
         guard let ip = preferences.monitorIP, !ip.isEmpty else {
@@ -297,12 +297,10 @@ final class ConnectionController {
             do {
                 let connection = try await ws.connect(to: ip, token: token, pinnedCertificateSHA256: pin)
                 if connection.token != token {
-                    do { try tokens.save(connection.token, for: ip) }
-                    catch { append("token save failed: \(error.redactedDescription)") }
+                    tokens.save(connection.token, for: ip)
                 }
                 if pin == nil, let fingerprint = connection.certificateSHA256 {
-                    do { try pins.save(fingerprint, for: ip) }
-                    catch { append("certificate pin save failed: \(error.redactedDescription)") }
+                    pins.save(fingerprint, for: ip)
                 }
                 state = .connected
                 statusMessage = "Connected"
