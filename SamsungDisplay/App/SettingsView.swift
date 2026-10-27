@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var launchAtLogin = false
     @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
+    @State private var isConfirmingForget = false
 
     var body: some View {
         Form {
@@ -37,7 +38,14 @@ struct SettingsView: View {
                 controller.connect(to: monitor.ip)
             }
             LabeledContent("Pairing") {
-                Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
+                Button("Wipe token and re-pair") { isConfirmingForget = true }
+                    .alert("Forget the pairing?", isPresented: $isConfirmingForget) {
+                        Button("Forget", role: .destructive) { controller.wipeTokenAndReconnect() }
+                        Button("Cancel", role: .cancel) {}
+                            .keyboardShortcut(.defaultAction)
+                    } message: {
+                        Text("The monitor asks you to select Allow again.")
+                    }
             }
         } header: {
             Text("Monitor")
