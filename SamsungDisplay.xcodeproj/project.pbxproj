@@ -17,7 +17,9 @@
 		406C45401AA5CD7200999B81 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A44A9A4976802B805C96AD /* OnboardingView.swift */; };
 		40B07CDE682A9765CE4C21E6 /* GlassControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */; };
 		417073FBF952FC6995C012E4 /* WakeOnLAN.swift in Sources */ = {isa = PBXBuildFile; fileRef = E353643AED1B18B46D411968 /* WakeOnLAN.swift */; };
+		4892F63B21DE5BD3E5032FD2 /* MenuBarAnimatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B18AA461C6A49B7B467CBD37 /* MenuBarAnimatorTests.swift */; };
 		4A2335FA51A57FEF63B3BAD3 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4E717EF98226861041C3AE79 /* AppIcon.icon */; };
+		4E16BF9542C5AD1D61A6EC57 /* MenuBarAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59072009662DBE554A0A33FC /* MenuBarAnimator.swift */; };
 		4F0F43D36E15EBF47986EFEE /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23201C841AB85A3305115C3 /* PermissionsView.swift */; };
 		59F5ADEB6C9166ADF600A6A2 /* MonitorPickerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */; };
 		5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0238ABC374962D76E352264F /* MediaKeyPermission.swift */; };
@@ -108,6 +110,7 @@
 		54CC5E1B08180262C286BF32 /* OnboardingStepTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStepTests.swift; sourceTree = "<group>"; };
 		5671CFE904DED2F980B6FC4E /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
 		56DD1F09BA455AFDDD8D17C6 /* MediaKeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaKeyTap.swift; sourceTree = "<group>"; };
+		59072009662DBE554A0A33FC /* MenuBarAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarAnimator.swift; sourceTree = "<group>"; };
 		5CD00B680822D48302250473 /* RedactedError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactedError.swift; sourceTree = "<group>"; };
 		5D673F1A0A8B13DB74BF1C40 /* RemotePad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePad.swift; sourceTree = "<group>"; };
 		65E0114E17D98833750F7BB7 /* ConnectionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionStateTests.swift; sourceTree = "<group>"; };
@@ -137,6 +140,7 @@
 		AB6B820784E4AE8F3FDADADF /* SamsungURLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungURLTests.swift; sourceTree = "<group>"; };
 		AF94448E1239C5CD41BC43D6 /* FakePathObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePathObserver.swift; sourceTree = "<group>"; };
 		B0D3FEC251721813B42517F1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B18AA461C6A49B7B467CBD37 /* MenuBarAnimatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarAnimatorTests.swift; sourceTree = "<group>"; };
 		B23201C841AB85A3305115C3 /* PermissionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsView.swift; sourceTree = "<group>"; };
 		B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoPlistTests.swift; sourceTree = "<group>"; };
 		B9057DA4385DC013099ABEAD /* SoundButtonRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundButtonRow.swift; sourceTree = "<group>"; };
@@ -289,6 +293,7 @@
 				A41B5912BEB1C77D5FF6853A /* GlassCard.swift */,
 				EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */,
 				07E2DB242E131D8FD713EA6A /* LaunchAtLogin.swift */,
+				59072009662DBE554A0A33FC /* MenuBarAnimator.swift */,
 				315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */,
 				B23201C841AB85A3305115C3 /* PermissionsView.swift */,
 				729EC6E8A244384538B2A0B2 /* PopoverContent.swift */,
@@ -319,6 +324,7 @@
 				65E0114E17D98833750F7BB7 /* ConnectionStateTests.swift */,
 				B622355F9CA7BE69C14273B0 /* InfoPlistTests.swift */,
 				86B44E16972F406CA04990AD /* MediaKeyEventTests.swift */,
+				B18AA461C6A49B7B467CBD37 /* MenuBarAnimatorTests.swift */,
 				67B475314A5092607238EBC5 /* NetworkPathObserverTests.swift */,
 				54CC5E1B08180262C286BF32 /* OnboardingStepTests.swift */,
 				97C3146F69A4DBAB71BB0734 /* ReconnectPolicyTests.swift */,
@@ -445,6 +451,7 @@
 				7795BB70007A34A20FA4A620 /* MediaKeyEvent.swift in Sources */,
 				5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */,
 				8348E96114E7DD5820265291 /* MediaKeyTap.swift in Sources */,
+				4E16BF9542C5AD1D61A6EC57 /* MenuBarAnimator.swift in Sources */,
 				6D701F16FAFAE70AFB418BB1 /* MonitorDiscovery.swift in Sources */,
 				59F5ADEB6C9166ADF600A6A2 /* MonitorPickerViews.swift in Sources */,
 				A2BB3460C3F93F8FF5F4E86B /* NetworkPathObserver.swift in Sources */,
@@ -489,6 +496,7 @@
 				D7E3B19AAF9478FD384313A6 /* FakePathObserver.swift in Sources */,
 				0D230ED5037998C042604328 /* InfoPlistTests.swift in Sources */,
 				8D34FF002ADA3202B351E970 /* MediaKeyEventTests.swift in Sources */,
+				4892F63B21DE5BD3E5032FD2 /* MenuBarAnimatorTests.swift in Sources */,
 				BBFFE59322BB884B30645122 /* NetworkPathObserverTests.swift in Sources */,
 				B987AAF2497133C6FD75F728 /* OnboardingStepTests.swift in Sources */,
 				E75725215CA86B036A167A6A /* ReconnectPolicyTests.swift in Sources */,

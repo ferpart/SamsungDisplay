@@ -28,6 +28,7 @@ final class ConnectionController {
     private(set) var logEntries: [String] = []
     private(set) var monitorName: String?
     private(set) var powerState: PowerState?
+    private(set) var isUserDisconnected = false
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
@@ -228,14 +229,25 @@ final class ConnectionController {
     /// (Re)start the lifecycle task for `ip`. Cancels any in-flight task first
     /// so we never have two parallel loops (RESEARCH.md Pitfall #2).
     func start(ip: String) {
+        isUserDisconnected = false
         lifecycleTask?.cancel()
         lifecycleTask = Task { @MainActor [weak self] in
             await self?.runConnectLoop(ip: ip)
         }
     }
 
-    /// Cancel the loop and return to `.disconnected`. Used by tests; not
-    /// currently called from production UI.
+    func disconnect() {
+        stop()
+        isUserDisconnected = true
+        append("disconnected by the user")
+        Task { [ws] in await ws.disconnect() }
+    }
+
+    func reconnect() {
+        guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
+        start(ip: ip)
+    }
+
     func stop() {
         lifecycleTask?.cancel()
         lifecycleTask = nil
@@ -249,7 +261,7 @@ final class ConnectionController {
     /// the lifecycle task cancels the current `Task.sleep` so we retry
     /// immediately (RESEARCH.md Pattern 4 + Pitfall #2).
     private func kickReconnect() {
-        guard state != .connected, state != .unauthorized, state != .certificateMismatch else { return }
+        guard !isUserDisconnected, state != .connected, state != .unauthorized, state != .certificateMismatch else { return }
         guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
         append("path satisfied — kicking reconnect")
         start(ip: ip)
@@ -263,7 +275,7 @@ final class ConnectionController {
     /// again, which is exactly the desired UX: visible "Reconnecting…" in
     /// the popover + backoff schedule visible in Settings → Logs.
     private func handlePathLost() {
-        guard state != .unauthorized, state != .certificateMismatch, state != .noIP else { return }
+        guard !isUserDisconnected, state != .unauthorized, state != .certificateMismatch, state != .noIP else { return }
         append("path lost")
         state = .connecting
         statusMessage = "Reconnecting…"

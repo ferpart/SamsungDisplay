@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
     @State private var ipRejected = false
+    @State private var isConfirmingForget = false
 
     var body: some View {
         Form {
@@ -40,8 +41,23 @@ struct SettingsView: View {
                 ipDraft = monitor.ip
                 controller.connect(to: monitor.ip)
             }
+            LabeledContent("Connection") {
+                if controller.isUserDisconnected {
+                    Button("Connect") { controller.reconnect() }
+                } else {
+                    Button("Disconnect") { controller.disconnect() }
+                        .disabled(controller.state == .noIP)
+                }
+            }
             LabeledContent("Pairing") {
-                Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
+                Button("Wipe token and re-pair") { isConfirmingForget = true }
+                    .alert("Forget the pairing?", isPresented: $isConfirmingForget) {
+                        Button("Forget", role: .destructive) { controller.wipeTokenAndReconnect() }
+                        Button("Cancel", role: .cancel) {}
+                            .keyboardShortcut(.defaultAction)
+                    } message: {
+                        Text("The monitor asks you to select Allow again.")
+                    }
             }
             if controller.state == .certificateMismatch {
                 Text(ConnectionController.certificateMismatchExplanation).font(.caption).foregroundStyle(.red)

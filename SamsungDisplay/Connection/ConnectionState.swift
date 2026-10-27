@@ -20,10 +20,11 @@ enum ConnectionState: Sendable, Equatable {
 }
 
 extension ConnectionState {
-    var menuBarImage: String {
+    func menuBarImage(animationStep: Int) -> String {
         switch self {
-        case .connected, .connecting: "MenuBarConnected"
-        case .disconnected, .noIP, .unauthorized, .certificateMismatch: "MenuBarDisconnected"
+        case .connected: "MenuBarBars3"
+        case .connecting: "MenuBarBars\(animationStep % 4)"
+        case .disconnected, .noIP, .unauthorized, .certificateMismatch: "MenuBarBars0"
         }
     }
 }
