@@ -2,15 +2,6 @@ import CryptoKit
 import Foundation
 import Synchronization
 
-/// Host-pinned `URLSessionDelegate` that accepts Samsung's self-signed TLS
-/// certificate **only** when the challenge's host matches `allowedHost`, and,
-/// when `pinnedCertificateSHA256` is set, only when the leaf certificate matches it.
-///
-/// Any other host — and any non-server-trust authentication method — falls through
-/// to `.performDefaultHandling`, so the system's normal ATS validation applies.
-///
-/// Designed to be attached to a `URLSession` built specifically for Samsung
-/// traffic — never share the session with general-purpose HTTP work.
 final class SamsungTLSDelegate: NSObject, URLSessionDelegate, Sendable {
 
     let allowedHost: String

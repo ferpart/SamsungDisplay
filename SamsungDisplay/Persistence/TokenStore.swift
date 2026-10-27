@@ -5,10 +5,6 @@ enum TokenStoreError: Error {
     case unhandled(OSStatus)
 }
 
-/// Keychain-backed store for the Samsung auth token, with one item per monitor IP.
-///
-/// Tests construct instances with unique service names to avoid polluting
-/// the real keychain item.
 struct TokenStore {
     let service: String
 

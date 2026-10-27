@@ -76,21 +76,6 @@ actor SamsungWSActor {
         self.appName = appName
     }
 
-    /// Open a Samsung remote WebSocket and resolve the auth token.
-    ///
-    /// - Parameters:
-    ///   - ip: Monitor IP on the LAN. Used both as the WebSocket host and as
-    ///         the pinned `allowedHost` on `SamsungTLSDelegate`.
-    ///   - token: Optional saved token from a previous pairing. If `nil`, the
-    ///            monitor will show a pairing popup; if non-nil, the monitor
-    ///            should silently accept the existing pairing.
-    /// - Returns: A non-empty pairing token and the accepted leaf certificate
-    ///   SHA-256 (`nil` on plain ws). If the input `token` was non-nil and the
-    ///   monitor did not re-issue one, the token is the input unchanged.
-    /// - Throws: `SamsungWSError.connectionTimeout` on 30s no-frame guard,
-    ///   `SamsungWSError.unauthorized` on explicit reject,
-    ///   `SamsungWSError.certificateMismatch` when the leaf does not match the pin,
-    ///   `SamsungWSError.noTokenInResponse` if the loop ends without resolution.
     func connect(to ip: String, token: String?, pinnedCertificateSHA256: String?) async throws -> SamsungConnection {
         try await firstSuccessfulPort(samsungRemotePorts) { port in
             try await connect(to: ip, port: port, token: token, pinnedCertificateSHA256: pinnedCertificateSHA256)
@@ -126,8 +111,6 @@ actor SamsungWSActor {
         } catch where pinned.rejectedCertificate {
             throw SamsungWSError.certificateMismatch
         }
-        // Start the post-handshake liveness work. From here on, any close,
-        // receive error, or heartbeat timeout will surface via waitForClose().
         startLiveTask(task: wsTask)
         return SamsungConnection(token: result, certificateSHA256: pinned.acceptedCertificateSHA256)
     }

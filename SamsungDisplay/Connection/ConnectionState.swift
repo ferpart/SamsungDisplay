@@ -15,7 +15,6 @@ enum ConnectionState: Sendable, Equatable {
     case connected
     /// `ms.channel.unauthorized` received. Loop is stopped; user must wipe token.
     case unauthorized
-    /// The monitor's TLS leaf certificate does not match the pin. Loop is stopped; user must re-pair.
     case certificateMismatch
 }
 
