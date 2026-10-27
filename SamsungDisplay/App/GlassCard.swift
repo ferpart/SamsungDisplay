@@ -30,6 +30,8 @@ private struct GlassWindowBody: NSViewRepresentable {
             guard let window else { return }
             window.isOpaque = false
             window.backgroundColor = .clear
+            window.titlebarAppearsTransparent = true
+            window.styleMask.insert(.fullSizeContentView)
             if !isResizable { window.styleMask.remove(.resizable) }
         }
     }
