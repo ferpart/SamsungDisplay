@@ -34,8 +34,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fp.SamsungDisplay
         INFOPLIST_FILE: SamsungDisplay/Resources/Info.plist
-        ENTITLEMENTS_WITHOUT_TEAM_: SamsungDisplay/Resources/SamsungDisplay.entitlements
-        CODE_SIGN_ENTITLEMENTS: $(ENTITLEMENTS_WITHOUT_TEAM_$(DEVELOPMENT_TEAM):default=SamsungDisplay/Resources/SamsungDisplay.team.entitlements)
+        CODE_SIGN_ENTITLEMENTS: SamsungDisplay/Resources/SamsungDisplay.entitlements
         ENABLE_TESTABILITY: YES
         GENERATE_INFOPLIST_FILE: NO
         PRODUCT_NAME: SamsungDisplay
