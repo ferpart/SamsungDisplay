@@ -17,6 +17,7 @@
 		406C45401AA5CD7200999B81 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A44A9A4976802B805C96AD /* OnboardingView.swift */; };
 		40B07CDE682A9765CE4C21E6 /* GlassControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7595D9784C3DA1FE07CD29 /* GlassControls.swift */; };
 		417073FBF952FC6995C012E4 /* WakeOnLAN.swift in Sources */ = {isa = PBXBuildFile; fileRef = E353643AED1B18B46D411968 /* WakeOnLAN.swift */; };
+		4A2335FA51A57FEF63B3BAD3 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4E717EF98226861041C3AE79 /* AppIcon.icon */; };
 		4F0F43D36E15EBF47986EFEE /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23201C841AB85A3305115C3 /* PermissionsView.swift */; };
 		59F5ADEB6C9166ADF600A6A2 /* MonitorPickerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315B87F7D4BC21678D148525 /* MonitorPickerViews.swift */; };
 		5BF31D6F2F8ABA144C9BEEFF /* MediaKeyPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0238ABC374962D76E352264F /* MediaKeyPermission.swift */; };
@@ -100,6 +101,7 @@
 		37CBF7EDBE27691B0A43AB7E /* SamsungCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamsungCommandTests.swift; sourceTree = "<group>"; };
 		45A44A9A4976802B805C96AD /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		49728B4CE83EA861C40A74FC /* RemoteKeyMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteKeyMappingTests.swift; sourceTree = "<group>"; };
+		4E717EF98226861041C3AE79 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		54CC5E1B08180262C286BF32 /* OnboardingStepTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStepTests.swift; sourceTree = "<group>"; };
 		5671CFE904DED2F980B6FC4E /* ConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
 		56DD1F09BA455AFDDD8D17C6 /* MediaKeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaKeyTap.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 		2EE3DFDAB4F966491A37D1BB /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				4E717EF98226861041C3AE79 /* AppIcon.icon */,
 				B0D3FEC251721813B42517F1 /* Info.plist */,
 				F884AAE0BAFC78B6FB43850D /* SamsungDisplay.entitlements */,
 			);
@@ -350,6 +353,7 @@
 			buildConfigurationList = 59E0ACD219DB898BBF5D8D21 /* Build configuration list for PBXNativeTarget "SamsungDisplay" */;
 			buildPhases = (
 				211A88F92CF56F962F0EE9CA /* Sources */,
+				EFAC524EBFB89870ACAB9239 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -400,6 +404,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EFAC524EBFB89870ACAB9239 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A2335FA51A57FEF63B3BAD3 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		211A88F92CF56F962F0EE9CA /* Sources */ = {
@@ -512,7 +527,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -601,7 +616,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 2ABACCEFA6FA6B78E576C0AC /* Signing.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SamsungDisplay/Resources/SamsungDisplay.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;

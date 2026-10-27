@@ -23,6 +23,8 @@ targets:
     platform: macOS
     sources:
       - path: SamsungDisplay
+        excludes:
+          - Resources/AppIcon.svg
     configFiles:
       Debug: Config/Signing.xcconfig
       Release: Config/Signing.xcconfig
@@ -34,7 +36,7 @@ targets:
         ENABLE_TESTABILITY: YES
         GENERATE_INFOPLIST_FILE: NO
         PRODUCT_NAME: SamsungDisplay
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
       configs:
         Debug:
