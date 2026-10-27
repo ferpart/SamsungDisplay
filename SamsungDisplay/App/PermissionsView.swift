@@ -30,6 +30,7 @@ struct PermissionsView: View {
             if !permission.isGranted {
                 Button("Allow volume keys…") { permission.request() }
                     .buttonStyle(.glassProminent)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .task {
@@ -48,9 +49,9 @@ private struct PermissionRow: View {
     let pane: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(title).font(.headline)
+                Text(title)
                 Spacer()
                 if let granted {
                     Label(granted ? "Allowed" : "Not allowed",
@@ -60,7 +61,7 @@ private struct PermissionRow: View {
                 }
             }
             Text(detail)
-                .font(.callout)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Button("Open System Settings") {
@@ -68,8 +69,8 @@ private struct PermissionRow: View {
                     NSWorkspace.shared.open(url)
                 }
             }
-            .buttonStyle(.glass)
             .controlSize(.small)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 }

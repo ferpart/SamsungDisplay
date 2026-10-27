@@ -2,45 +2,26 @@ import AppKit
 import SwiftUI
 
 struct VolumeOSDView: View {
-    let level: Int?
     let muted: Bool
     var pulse = 0
 
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: symbolName)
-                .font(.system(size: 26, weight: .medium))
-                .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.bounce, value: pulse)
-                .frame(width: 40)
-            if let level {
-                ProgressView(value: Double(muted ? 0 : level), total: 100)
-                    .progressViewStyle(.linear)
-                    .frame(width: 180)
-            }
-        }
+        Image(systemName: muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+            .font(.system(size: 26, weight: .medium))
+            .contentTransition(.symbolEffect(.replace))
+            .symbolEffect(.bounce, value: pulse)
+            .frame(width: 40)
         .padding(.horizontal, 22)
         .padding(.vertical, 16)
         .glassEffect(.regular, in: .capsule)
         .padding(24)
-    }
-
-    private var symbolName: String {
-        if muted { return "speaker.slash.fill" }
-        switch level {
-        case nil: return "speaker.wave.2.fill"
-        case 0?: return "speaker.fill"
-        case let level? where level < 34: return "speaker.wave.1.fill"
-        case let level? where level < 67: return "speaker.wave.2.fill"
-        default: return "speaker.wave.3.fill"
-        }
     }
 }
 
 @MainActor
 final class VolumeOSD {
     private let panel: NSPanel
-    private let hostingView = NSHostingView(rootView: VolumeOSDView(level: nil, muted: false))
+    private let hostingView = NSHostingView(rootView: VolumeOSDView(muted: false))
     private var pulse = 0
     private var hideTask: Task<Void, Never>?
 
@@ -60,9 +41,9 @@ final class VolumeOSD {
         panel.contentView = hostingView
     }
 
-    func show(level: Int?, muted: Bool, on screen: NSScreen?) {
+    func show(muted: Bool, on screen: NSScreen?) {
         pulse += 1
-        hostingView.rootView = VolumeOSDView(level: level, muted: muted, pulse: pulse)
+        hostingView.rootView = VolumeOSDView(muted: muted, pulse: pulse)
         let size = hostingView.fittingSize
         let visibleFrame = (screen ?? NSScreen.main)?.visibleFrame ?? .zero
         panel.setFrame(
@@ -86,10 +67,10 @@ final class VolumeOSD {
     }
 }
 
-#Preview("No level") {
-    VolumeOSDView(level: nil, muted: false)
+#Preview("Unmuted") {
+    VolumeOSDView(muted: false)
 }
 
-#Preview("Muted with level") {
-    VolumeOSDView(level: 40, muted: true)
+#Preview("Muted") {
+    VolumeOSDView(muted: true)
 }

@@ -9,91 +9,112 @@ struct SettingsView: View {
     @State private var audioOutputName: String?
     @State private var audioOutputs: [String] = []
     @State private var launchAtLogin = false
+    @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
+    @State private var isConfirmingForget = false
 
     var body: some View {
-        ScrollView {
-            GlassEffectContainer(spacing: 16) {
-                VStack(spacing: 16) {
-                    monitorCard
-                    audioCard
-                    startupCard
-                    permissionsCard
-                    logsCard
-                }
+        Form {
+            monitorSection
+            volumeKeysSection
+            generalSection
+            Section("Permissions") {
+                PermissionsView(permission: permission)
             }
-            .padding(20)
+            logsSection
         }
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .frame(minWidth: 480, idealWidth: 520, minHeight: 520, idealHeight: 700)
-        .glassWindowBackground()
+        .glassWindowBackground(isResizable: true)
         .onAppear(perform: load)
     }
 
-    private var monitorCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Monitor").font(.headline)
+    private var monitorSection: some View {
+        Section {
             ManualIPField(draft: $ipDraft, buttonTitle: "Save and reconnect") { controller.connect(to: $0) }
             DiscoveredMonitorsView(discovery: discovery) { monitor in
                 ipDraft = monitor.ip
                 controller.connect(to: monitor.ip)
             }
-            Divider()
-            Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
-                .buttonStyle(.glass)
-            Text("Forgets the saved pairing token. The monitor then asks you to select Allow again.")
-                .font(.caption)
+            LabeledContent("Connection") {
+                if controller.isUserDisconnected {
+                    Button("Connect") { controller.reconnect() }
+                } else {
+                    Button("Disconnect") { controller.disconnect() }
+                        .disabled(controller.state == .noIP)
+                }
+            }
+            LabeledContent("Pairing") {
+                Button("Wipe token and re-pair") { isConfirmingForget = true }
+                    .alert("Forget the pairing?", isPresented: $isConfirmingForget) {
+                        Button("Forget", role: .destructive) { controller.wipeTokenAndReconnect() }
+                        Button("Cancel", role: .cancel) {}
+                            .keyboardShortcut(.defaultAction)
+                    } message: {
+                        Text("The monitor asks you to select Allow again.")
+                    }
+            }
+        } header: {
+            Text("Monitor")
+        } footer: {
+            Text("Wipe the token to forget the pairing. The monitor then asks you to select Allow again.")
                 .foregroundStyle(.secondary)
         }
-        .glassCard()
     }
 
-    private var audioCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Volume keys").font(.headline)
+    private var volumeKeysSection: some View {
+        Section {
             Picker("Audio output", selection: $audioOutputName) {
                 Text("Same name as a connected display").tag(String?.none)
                 ForEach(audioOutputs, id: \.self) { Text($0).tag(String?.some($0)) }
             }
             .onChange(of: audioOutputName) { _, name in preferences.audioOutputName = name }
+        } header: {
+            Text("Volume keys")
+        } footer: {
             Text("The keys control the monitor only when this output is the macOS output device.")
-                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .glassCard()
     }
 
-    private var startupCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private var generalSection: some View {
+        Section("General") {
+            LabeledContent("Appearance") {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppearanceMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .fixedSize()
+            }
+            .onChange(of: appearance) { _, mode in
+                preferences.appearance = mode
+                NSApp.appearance = mode.nsAppearance
+            }
             Toggle("Launch at login", isOn: launchAtLoginBinding)
+                .toggleStyle(.switch)
             if let launchAtLoginError {
                 Text(launchAtLoginError).font(.caption).foregroundStyle(.red)
             }
         }
-        .glassCard()
     }
 
-    private var permissionsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Permissions").font(.headline)
-            PermissionsView(permission: permission)
-        }
-        .glassCard()
-    }
-
-    private var logsCard: some View {
-        DisclosureGroup("Logs") {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(controller.logEntries.enumerated()), id: \.offset) { _, line in
-                        Text(line)
-                            .font(.system(.caption, design: .monospaced))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+    private var logsSection: some View {
+        Section {
+            DisclosureGroup("Logs") {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(controller.logEntries.enumerated()), id: \.offset) { _, line in
+                            Text(line)
+                                .font(.system(.caption, design: .monospaced))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                 }
+                .frame(height: 160)
             }
-            .frame(height: 160)
         }
-        .glassCard()
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -117,5 +138,6 @@ struct SettingsView: View {
         audioOutputs = AudioOutputDevices.names()
         if let audioOutputName, !audioOutputs.contains(audioOutputName) { audioOutputs.append(audioOutputName) }
         launchAtLogin = LaunchAtLogin.isEnabled
+        appearance = preferences.appearance
     }
 }

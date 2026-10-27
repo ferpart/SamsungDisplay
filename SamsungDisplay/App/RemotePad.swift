@@ -9,43 +9,35 @@ struct RemotePad: View {
     private var isConnected: Bool { controller.state == .connected }
 
     var body: some View {
-        Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            GridRow {
-                plain("Back", systemImage: "arrow.uturn.backward", key: .back)
-                arrow("chevron.up", key: .up)
-                plain("Home", systemImage: "house", key: .home)
-            }
-            GridRow {
-                arrow("chevron.left", key: .left)
-                plain("OK", systemImage: nil, key: .enter)
-                arrow("chevron.right", key: .right)
-            }
-            GridRow {
-                Color.clear.frame(height: 1)
-                arrow("chevron.down", key: .down)
-                Color.clear.frame(height: 1)
+        VStack(spacing: 14) {
+            clickpad.opacity(isConnected ? 1 : 0.5)
+            HStack(spacing: 36) {
+                RoundIconButton(systemImage: "chevron.left", label: "Back", diameter: 46) { controller.send(.back) }
+                RoundIconButton(systemImage: "house", label: "Home", diameter: 46) { controller.send(.home) }
             }
         }
         .disabled(!isConnected)
-        .glassCard()
         .background(WindowReader(window: popoverWindow))
         .onAppear(perform: installKeyMonitor)
         .onDisappear(perform: removeKeyMonitor)
     }
 
-    private func plain(_ title: String, systemImage: String?, key: SamsungCommand.Key) -> some View {
-        Button { controller.send(key) } label: {
-            Group {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                } else {
-                    Text(title).bold()
-                }
+    private var clickpad: some View {
+        ZStack {
+            Circle().fill(Color.primary.opacity(0.08))
+            Circle().strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+            arrow("chevron.up", key: .up).offset(y: -72)
+            arrow("chevron.down", key: .down).offset(y: 72)
+            arrow("chevron.left", key: .left).offset(x: -72)
+            arrow("chevron.right", key: .right).offset(x: 72)
+            Button { controller.send(.enter) } label: {
+                Text("OK").font(.headline).frame(width: 74, height: 74).contentShape(.circle)
             }
-            .frame(maxWidth: .infinity, minHeight: 28)
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .circle)
+            .accessibilityLabel("OK")
         }
-        .buttonStyle(.glass)
-        .accessibilityLabel(title)
+        .frame(width: 196, height: 196)
     }
 
     private func arrow(_ systemImage: String, key: SamsungCommand.Key) -> some View {
@@ -84,11 +76,10 @@ private struct HoldRepeatButton: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.title3.weight(.semibold))
-            .frame(maxWidth: .infinity, minHeight: 28)
-            .padding(.vertical, 6)
-            .glassEffect(.regular.interactive(), in: .capsule)
-            .contentShape(.capsule)
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 40, height: 40)
+            .contentShape(.rect)
             .gesture(DragGesture(minimumDistance: 0).onChanged { _ in begin() }.onEnded { _ in end() })
             .accessibilityLabel(label)
             .accessibilityAddTraits(.isButton)

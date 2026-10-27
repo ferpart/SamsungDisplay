@@ -8,13 +8,14 @@ struct DiscoveredMonitorsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
+                Spacer(minLength: 0)
+                if discovery.isSearching { ProgressView().controlSize(.small) }
                 Button("Search for monitors") {
                     hasSearched = true
                     Task { await discovery.search() }
                 }
                 .buttonStyle(.glass)
                 .disabled(discovery.isSearching)
-                if discovery.isSearching { ProgressView().controlSize(.small) }
             }
             ForEach(discovery.monitors, id: \.wifiMac) { monitor in
                 Button { onSelect(monitor) } label: {

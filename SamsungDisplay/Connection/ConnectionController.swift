@@ -26,10 +26,9 @@ final class ConnectionController {
     private(set) var state: ConnectionState = .noIP
     private(set) var statusMessage: String = "Not connected"
     private(set) var logEntries: [String] = []
-    private(set) var volume: Int?
-    private(set) var isMuted: Bool?
     private(set) var monitorName: String?
     private(set) var powerState: PowerState?
+    private(set) var isUserDisconnected = false
 
     // Injected dependencies.
     private let ws: any SamsungWSDriving
@@ -40,11 +39,6 @@ final class ConnectionController {
     private let policy: ReconnectPolicy
 
     private var lifecycleTask: Task<Void, Never>?
-    @ObservationIgnored private var rawVolume: Int?
-    @ObservationIgnored private var rawMuted: Bool?
-    @ObservationIgnored private var volumeTrusted = false
-    @ObservationIgnored private var muteTrusted = false
-    @ObservationIgnored private var volumeDisproved = false
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
     private let logCap = 50
 
@@ -103,56 +97,15 @@ final class ConnectionController {
     /// sends do not redefine our connection truth.
     func send(_ key: SamsungCommand.Key) {
         Task { @MainActor [weak self] in
-            await self?.sendAndRefresh(key)
+            await self?.sendKey(key)
         }
     }
 
-    func sendAndRefresh(_ key: SamsungCommand.Key) async {
-        let volumeBefore = rawVolume
-        let muteBefore = rawMuted
+    private func sendKey(_ key: SamsungCommand.Key) async {
         do {
             try await ws.sendKey(key)
         } catch {
             append("send \(key.rawValue) failed: \(error)")
-            return
-        }
-        guard [.volUp, .volDown, .mute].contains(key), rawVolume != nil || rawMuted != nil else { return }
-        await refreshVolume()
-        switch key {
-        case .volUp: trustVolumeIfMoved(by: 1, from: volumeBefore)
-        case .volDown: trustVolumeIfMoved(by: -1, from: volumeBefore)
-        case .mute: trustMuteIfFlipped(from: muteBefore)
-        default: break
-        }
-    }
-
-    func refreshVolume() async {
-        guard let ip = preferences.monitorIP else { return }
-        do {
-            rawVolume = try await lan.volume(host: ip)
-            rawMuted = try await lan.isMuted(host: ip)
-        } catch {
-            rawVolume = nil
-            rawMuted = nil
-            append("volume read failed: \(error)")
-        }
-        publishRendererState()
-    }
-
-    func setVolume(_ level: Int) {
-        guard let ip = preferences.monitorIP else { return }
-        let clamped = min(max(level, 0), 100)
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await self.lan.setVolume(clamped, host: ip)
-                self.rawVolume = clamped
-            } catch {
-                self.volumeTrusted = false
-                self.volumeDisproved = true
-                self.append("set volume failed: \(error)")
-            }
-            self.publishRendererState()
         }
     }
 
@@ -178,7 +131,7 @@ final class ConnectionController {
     func changePower(toOn: Bool) async {
         switch (toOn, await readPowerState()) {
         case (true, .on), (false, .standby), (false, .off): return
-        case (false, .on): await sendAndRefresh(.power)
+        case (false, .on): await sendKey(.power)
         case (true, .standby): await sendPowerKeyWhenConnected()
         case (true, .off): await wakeOnLAN()
         }
@@ -207,7 +160,7 @@ final class ConnectionController {
             append("power on skipped: not connected")
             return
         }
-        await sendAndRefresh(.power)
+        await sendKey(.power)
     }
 
     private func wakeOnLAN() async {
@@ -263,14 +216,25 @@ final class ConnectionController {
     /// (Re)start the lifecycle task for `ip`. Cancels any in-flight task first
     /// so we never have two parallel loops (RESEARCH.md Pitfall #2).
     func start(ip: String) {
+        isUserDisconnected = false
         lifecycleTask?.cancel()
         lifecycleTask = Task { @MainActor [weak self] in
             await self?.runConnectLoop(ip: ip)
         }
     }
 
-    /// Cancel the loop and return to `.disconnected`. Used by tests; not
-    /// currently called from production UI.
+    func disconnect() {
+        stop()
+        isUserDisconnected = true
+        append("disconnected by the user")
+        Task { [ws] in await ws.disconnect() }
+    }
+
+    func reconnect() {
+        guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
+        start(ip: ip)
+    }
+
     func stop() {
         lifecycleTask?.cancel()
         lifecycleTask = nil
@@ -284,7 +248,7 @@ final class ConnectionController {
     /// the lifecycle task cancels the current `Task.sleep` so we retry
     /// immediately (RESEARCH.md Pattern 4 + Pitfall #2).
     private func kickReconnect() {
-        guard state != .connected, state != .unauthorized else { return }
+        guard !isUserDisconnected, state != .connected, state != .unauthorized else { return }
         guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
         append("path satisfied — kicking reconnect")
         start(ip: ip)
@@ -298,7 +262,7 @@ final class ConnectionController {
     /// again, which is exactly the desired UX: visible "Reconnecting…" in
     /// the popover + backoff schedule visible in Settings → Logs.
     private func handlePathLost() {
-        guard state != .unauthorized, state != .noIP else { return }
+        guard !isUserDisconnected, state != .unauthorized, state != .noIP else { return }
         append("path lost")
         state = .connecting
         statusMessage = "Reconnecting…"
@@ -324,7 +288,6 @@ final class ConnectionController {
                 }
                 state = .connected
                 statusMessage = "Connected"
-                resetRendererTrust()
                 lastDelay = nil   // reset on success
                 append("connected")
                 Task { @MainActor [weak self] in await self?.loadMonitorDetails(ip: ip) }
@@ -361,32 +324,6 @@ final class ConnectionController {
         }
     }
 
-    private func trustVolumeIfMoved(by step: Int, from before: Int?) {
-        guard !volumeDisproved, let before, let current = rawVolume, current - before == step else { return }
-        volumeTrusted = true
-        publishRendererState()
-    }
-
-    private func trustMuteIfFlipped(from before: Bool?) {
-        guard let before, let current = rawMuted, current != before else { return }
-        muteTrusted = true
-        publishRendererState()
-    }
-
-    private func publishRendererState() {
-        volume = volumeTrusted ? rawVolume : nil
-        isMuted = muteTrusted ? rawMuted : nil
-    }
-
-    private func resetRendererTrust() {
-        rawVolume = nil
-        rawMuted = nil
-        volumeTrusted = false
-        muteTrusted = false
-        volumeDisproved = false
-        publishRendererState()
-    }
-
     private func loadMonitorDetails(ip: String) async {
         do {
             let info = try await lan.deviceInfo(host: ip)
@@ -396,7 +333,6 @@ final class ConnectionController {
         } catch {
             append("device info failed: \(error)")
         }
-        await refreshVolume()
     }
 
     private func append(_ line: String) {

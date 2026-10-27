@@ -315,7 +315,7 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
-    // MARK: - LAN (volume, power, input)
+    // MARK: - LAN (power, input)
 
     private func connectedController() async throws -> ConnectionController {
         preferences.monitorIP = "192.168.1.10"
@@ -324,27 +324,6 @@ final class ConnectionControllerTests: XCTestCase {
         controller.bootstrap()
         try await waitFor { controller.state == .connected }
         return controller
-    }
-
-    private func settledController() async throws -> ConnectionController {
-        let controller = try await connectedController()
-        try await waitFor { self.preferences.monitorMAC != nil }
-        await controller.refreshVolume()
-        try await Task.sleep(for: .milliseconds(50))
-        return controller
-    }
-
-    func test_connect_withoutRenderer_leavesVolumeNil() async throws {
-        lan.volumeLevel = nil
-        let controller = try await connectedController()
-        try await waitFor { self.lan.volumeReads == 1 && self.preferences.monitorMAC != nil }
-        XCTAssertNil(controller.volume)
-        XCTAssertNil(controller.isMuted)
-
-        controller.send(.volUp)
-        try await waitFor { self.spy.sendKeyCalls == [.volUp] }
-        XCTAssertEqual(lan.volumeReads, 1, "relative keys must not poll a monitor without a renderer")
-        controller.stop()
     }
 
     func test_connect_storesMonitorName() async throws {
@@ -369,108 +348,61 @@ final class ConnectionControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .noIP)
     }
 
-    func test_connect_storesMAC_andHidesUnprovenVolumeAndMute() async throws {
-        let controller = try await settledController()
-        XCTAssertEqual(preferences.monitorMAC, "02:00:00:00:00:01")
-        XCTAssertNil(controller.volume)
-        XCTAssertNil(controller.isMuted)
+    func test_connect_storesMAC() async throws {
+        let controller = try await connectedController()
+        try await waitFor { self.preferences.monitorMAC == "02:00:00:00:00:01" }
         controller.stop()
     }
 
-    func test_volumeKey_movingVolumeByOne_trustsVolume() async throws {
-        let controller = try await settledController()
-        lan.volumeLevel = 21
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(controller.volume, 21)
+    // MARK: - User disconnect
 
-        lan.volumeLevel = 20
-        await controller.sendAndRefresh(.volDown)
-        XCTAssertEqual(controller.volume, 20)
-        controller.stop()
+    func test_disconnect_stopsTheLoopAndClosesTheSocket() async throws {
+        let controller = try await connectedController()
+        controller.disconnect()
+        XCTAssertEqual(controller.state, .disconnected)
+        XCTAssertTrue(controller.isUserDisconnected)
+        try await waitFor { self.spy.disconnectCalls == 1 }
     }
 
-    func test_volumeKey_unchangedVolume_staysHidden() async throws {
-        let controller = try await settledController()
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
-        controller.stop()
+    func test_disconnect_pathSatisfiedDoesNotReconnect() async throws {
+        let controller = try await connectedController()
+        let connects = spy.connectCalls.count
+        controller.disconnect()
+        path.firePathSatisfied()
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
+        XCTAssertEqual(controller.state, .disconnected)
     }
 
-    func test_volumeKey_movingVolumeInWrongDirectionOrByMoreThanOne_staysHidden() async throws {
-        let controller = try await settledController()
-        lan.volumeLevel = 19
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
-
-        lan.volumeLevel = 25
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
-        controller.stop()
+    func test_disconnect_pathLostDoesNotReconnect() async throws {
+        let controller = try await connectedController()
+        let connects = spy.connectCalls.count
+        controller.disconnect()
+        path.firePathLost()
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
+        XCTAssertEqual(controller.state, .disconnected)
     }
 
-    func test_volumeKey_atLimits_provesTheRendererOnlyWhenItMovesInward() async throws {
-        lan.volumeLevel = 100
-        let controller = try await settledController()
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
-
-        lan.volumeLevel = 99
-        await controller.sendAndRefresh(.volDown)
-        XCTAssertEqual(controller.volume, 99)
-        controller.stop()
+    func test_disconnect_duringBackoffStopsTheRetries() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .error(URLError(.timedOut))
+        let controller = makeController(policy: ReconnectPolicy(initial: .milliseconds(50), cap: .milliseconds(50), multiplier: 1))
+        controller.bootstrap()
+        try await waitFor { self.spy.connectCalls.count >= 1 }
+        controller.disconnect()
+        let connects = spy.connectCalls.count
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(spy.connectCalls.count, connects)
     }
 
-    func test_muteKey_flippingMute_trustsMute() async throws {
-        let controller = try await settledController()
-        lan.muted = true
-        await controller.sendAndRefresh(.mute)
-        XCTAssertEqual(controller.isMuted, true)
-        XCTAssertNil(controller.volume)
-        controller.stop()
-    }
-
-    func test_muteKey_unchangedMute_staysHidden() async throws {
-        let controller = try await settledController()
-        await controller.sendAndRefresh(.mute)
-        XCTAssertNil(controller.isMuted)
-        controller.stop()
-    }
-
-    func test_reconnect_forgetsTrust() async throws {
-        let controller = try await settledController()
-        lan.volumeLevel = 21
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(controller.volume, 21)
-
-        controller.start(ip: "192.168.1.10")
-        try await waitFor { controller.volume == nil && controller.state == .connected }
-        controller.stop()
-    }
-
-    func test_setVolume_trustedRenderer_forwardsClampedLevel() async throws {
-        let controller = try await settledController()
-        lan.volumeLevel = 21
-        await controller.sendAndRefresh(.volUp)
-
-        controller.setVolume(140)
-        try await waitFor { controller.volume == 100 }
-        XCTAssertEqual(lan.setVolumeCalls, [100])
-        controller.stop()
-    }
-
-    func test_setVolumeFailure_stopsTrustingVolumeForTheConnection() async throws {
-        let controller = try await settledController()
-        lan.volumeLevel = 21
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertEqual(controller.volume, 21)
-
-        lan.setVolumeFails = true
-        controller.setVolume(50)
-        try await waitFor { controller.volume == nil }
-
-        lan.volumeLevel = 22
-        await controller.sendAndRefresh(.volUp)
-        XCTAssertNil(controller.volume)
+    func test_reconnect_afterDisconnect_connectsWithTheStoredIP() async throws {
+        let controller = try await connectedController()
+        controller.disconnect()
+        controller.reconnect()
+        XCTAssertFalse(controller.isUserDisconnected)
+        try await waitFor { controller.state == .connected }
+        XCTAssertEqual(spy.connectCalls.last?.ip, "192.168.1.10")
         controller.stop()
     }
 

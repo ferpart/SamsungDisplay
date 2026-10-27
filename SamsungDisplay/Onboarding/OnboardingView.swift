@@ -27,7 +27,12 @@ struct OnboardingView: View {
     var body: some View {
         GlassEffectContainer(spacing: 16) {
             VStack(alignment: .leading, spacing: 16) {
-                Label("Set up SamsungDisplay", systemImage: "display").font(.title2.bold())
+                Label {
+                    Text("Set up SamsungDisplay")
+                } icon: {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
+                }
+                .font(.title2.bold())
                 content.glassCard()
             }
         }
@@ -115,7 +120,7 @@ struct OnboardingView: View {
             Label("All set", systemImage: "checkmark.circle.fill")
                 .font(.headline)
                 .foregroundStyle(.green)
-            Text("Use the speaker icon in the menu bar to control your monitor.")
+            Text("Use the monitor icon in the menu bar to control your monitor.")
                 .font(.callout)
             Button("Finish") { dismissWindow(id: "onboarding") }
                 .buttonStyle(.glassProminent)
