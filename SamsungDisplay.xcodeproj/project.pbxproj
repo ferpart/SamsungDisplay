@@ -545,7 +545,7 @@
 				CODE_SIGN_ENTITLEMENTS = "$(ENTITLEMENTS_WITHOUT_TEAM_$(DEVELOPMENT_TEAM):default=SamsungDisplay/Resources/SamsungDisplay.team.entitlements)";
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_TESTABILITY = YES;
+				ENABLE_TESTABILITY = NO;
 				ENTITLEMENTS_WITHOUT_TEAM_ = SamsungDisplay/Resources/SamsungDisplay.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SamsungDisplay/Resources/Info.plist;

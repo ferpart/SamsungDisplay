@@ -43,7 +43,7 @@ targets:
         Debug:
           ENABLE_TESTABILITY: YES
         Release:
-          ENABLE_TESTABILITY: YES
+          ENABLE_TESTABILITY: NO
   SamsungDisplayTests:
     type: bundle.unit-test
     platform: macOS
