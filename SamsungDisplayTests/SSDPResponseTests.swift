@@ -1,3 +1,4 @@
+import Network
 import XCTest
 @testable import SamsungDisplay
 
@@ -48,6 +49,27 @@ final class SSDPResponseTests: XCTestCase {
         XCTAssertTrue(request.contains("MAN: \"ssdp:discover\"\r\n"))
         XCTAssertTrue(request.contains("ST: urn:samsung.com:device:RemoteControlReceiver:1\r\n"))
         XCTAssertTrue(request.hasSuffix("\r\n\r\n"))
+    }
+
+    private func sender(_ ip: String) -> NWEndpoint {
+        .hostPort(host: .ipv4(IPv4Address(ip)!), port: 1900)
+    }
+
+    func test_trustedHost_acceptsPrivateSenderThatMatchesLocation() throws {
+        let response = try XCTUnwrap(SSDPResponse("HTTP/1.1 200 OK\r\nLOCATION: http://10.0.0.2:9197/dmr\r\n\r\n"))
+        XCTAssertEqual(MonitorDiscovery.trustedHost(of: response, sender: sender("10.0.0.2")), "10.0.0.2")
+    }
+
+    func test_trustedHost_rejectsLocationThatPointsAtAnotherHost() throws {
+        let response = try XCTUnwrap(SSDPResponse("HTTP/1.1 200 OK\r\nLOCATION: http://10.0.0.9:9197/dmr\r\n\r\n"))
+        XCTAssertNil(MonitorDiscovery.trustedHost(of: response, sender: sender("10.0.0.2")))
+    }
+
+    func test_trustedHost_rejectsPublicAndLoopbackSenders() throws {
+        for ip in ["8.8.8.8", "127.0.0.1"] {
+            let response = try XCTUnwrap(SSDPResponse("HTTP/1.1 200 OK\r\nLOCATION: http://\(ip):9197/dmr\r\n\r\n"))
+            XCTAssertNil(MonitorDiscovery.trustedHost(of: response, sender: sender(ip)), ip)
+        }
     }
 
     func test_deviceInfo_decodesG95SCReply() throws {

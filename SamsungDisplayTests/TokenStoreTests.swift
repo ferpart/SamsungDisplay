@@ -4,58 +4,75 @@ import Security
 
 final class TokenStoreTests: XCTestCase {
     private var sut: TokenStore!
+    private let ip = "192.0.2.10"
 
     override func setUp() {
         super.setUp()
-        sut = TokenStore(
-            service: "com.fp.SamsungDisplay.tests.\(UUID().uuidString)",
-            account: "test"
-        )
+        sut = TokenStore(service: "com.fp.SamsungDisplay.tests.\(UUID().uuidString)")
     }
 
     override func tearDown() {
-        sut.delete()
+        sut.deleteAll()
         sut = nil
         super.tearDown()
     }
 
     func test_saveThenLoad_returnsSameToken() throws {
-        try sut.save("abc123")
-        XCTAssertEqual(sut.load(), "abc123")
+        try sut.save("abc123", for: ip)
+        XCTAssertEqual(sut.load(for: ip), "abc123")
     }
 
     func test_saveTwice_replacesPreviousToken() throws {
-        try sut.save("first")
-        try sut.save("second")
-        XCTAssertEqual(sut.load(), "second")
+        try sut.save("first", for: ip)
+        try sut.save("second", for: ip)
+        XCTAssertEqual(sut.load(for: ip), "second")
     }
 
     func test_delete_clearsStoredToken() throws {
-        try sut.save("abc")
-        sut.delete()
-        XCTAssertNil(sut.load())
+        try sut.save("abc", for: ip)
+        sut.delete(for: ip)
+        XCTAssertNil(sut.load(for: ip))
     }
 
     func test_loadOnEmptyKeychain_returnsNil() {
-        // setUp gives a fresh unique service, so nothing is stored yet.
-        XCTAssertNil(sut.load())
+        XCTAssertNil(sut.load(for: ip))
     }
 
-    func test_storedItem_usesAccessibleAfterFirstUnlock() {
-        // macOS does not return the `pdmn` (kSecAttrAccessible) attribute in
-        // `SecItemCopyMatching` results for generic password items, so we cannot
-        // observe the persisted policy at runtime. Instead we assert the policy
-        // constant TokenStore applies on save() — the source of truth that
-        // SecItemAdd actually receives.
+    func test_tokensAreSeparatePerIP() throws {
+        try sut.save("a", for: ip)
+        try sut.save("b", for: "192.0.2.11")
+        sut.delete(for: "192.0.2.11")
+        XCTAssertEqual(sut.load(for: ip), "a")
+        XCTAssertNil(sut.load(for: "192.0.2.11"))
+    }
+
+    func test_deleteAll_removesEveryIP() throws {
+        try sut.save("a", for: ip)
+        try sut.save("b", for: "192.0.2.11")
+        sut.deleteAll()
+        XCTAssertNil(sut.load(for: ip))
+        XCTAssertNil(sut.load(for: "192.0.2.11"))
+    }
+
+    func test_deleteLegacyItems_inFileKeychain_removesOnlyTheDefaultAccount() throws {
+        try XCTSkipIf(TokenStore.usesDataProtectionKeychain)
+        try sut.save("legacy", for: "default")
+        try sut.save("current", for: ip)
+        sut.deleteLegacyItems()
+        XCTAssertNil(sut.load(for: "default"))
+        XCTAssertEqual(sut.load(for: ip), "current")
+    }
+
+    func test_accessibility_matchesKeychainKind() {
         XCTAssertEqual(
             TokenStore.accessibility,
-            kSecAttrAccessibleAfterFirstUnlock,
-            "TokenStore must save tokens with kSecAttrAccessibleAfterFirstUnlock so the token survives reboot before user unlock"
+            TokenStore.usesDataProtectionKeychain
+                ? kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+                : kSecAttrAccessibleAfterFirstUnlock
         )
     }
 
-    func test_sharedSingleton_hasExpectedServiceAndAccount() {
+    func test_sharedSingleton_hasExpectedService() {
         XCTAssertEqual(TokenStore.shared.service, "com.fp.SamsungDisplay.samsungToken")
-        XCTAssertEqual(TokenStore.shared.account, "default")
     }
 }

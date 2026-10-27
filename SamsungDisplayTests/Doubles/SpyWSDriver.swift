@@ -29,18 +29,20 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
     }
 
     private struct State {
-        var connectCalls: [(ip: String, token: String?)] = []
+        var connectCalls: [(ip: String, token: String?, pin: String?)] = []
+        var certificateSHA256: String? = "spy-certificate"
         var sendKeyCalls: [SamsungCommand.Key] = []
         var disconnectCalls: Int = 0
         var nextConnectOutcome: ConnectOutcome = .success(token: "spy-token")
         var nextSendKeyError: (any Error)? = nil
         var pendingClose: CheckedContinuation<Void, any Error>? = nil
+        var closeErrorBeforeWait: (any Error)? = nil
     }
 
     private let state = OSAllocatedUnfairLock<State>(initialState: State())
 
     // Recorded calls (read-only views for assertions).
-    var connectCalls: [(ip: String, token: String?)] {
+    var connectCalls: [(ip: String, token: String?, pin: String?)] {
         state.withLock { $0.connectCalls }
     }
     var sendKeyCalls: [SamsungCommand.Key] {
@@ -55,19 +57,23 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         get { state.withLock { $0.nextConnectOutcome } }
         set { state.withLock { $0.nextConnectOutcome = newValue } }
     }
+    var certificateSHA256: String? {
+        get { state.withLock { $0.certificateSHA256 } }
+        set { state.withLock { $0.certificateSHA256 = newValue } }
+    }
     var nextSendKeyError: (any Error)? {
         get { state.withLock { $0.nextSendKeyError } }
         set { state.withLock { $0.nextSendKeyError = newValue } }
     }
 
-    func connect(to ip: String, token: String?) async throws -> String {
-        let outcome = state.withLock { s -> ConnectOutcome in
-            s.connectCalls.append((ip, token))
-            return s.nextConnectOutcome
+    func connect(to ip: String, token: String?, pinnedCertificateSHA256: String?) async throws -> SamsungConnection {
+        let (outcome, certificate) = state.withLock { s -> (ConnectOutcome, String?) in
+            s.connectCalls.append((ip, token, pinnedCertificateSHA256))
+            return (s.nextConnectOutcome, s.certificateSHA256)
         }
         switch outcome {
         case .success(let token):
-            return token
+            return SamsungConnection(token: token, certificateSHA256: certificate)
         case .unauthorized:
             throw SamsungWSError.unauthorized
         case .error(let e):
@@ -94,7 +100,12 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
     func waitForClose() async throws {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, any Error>) in
-                state.withLock { $0.pendingClose = cont }
+                let earlyError = state.withLock { s -> (any Error)? in
+                    defer { s.closeErrorBeforeWait = nil }
+                    if s.closeErrorBeforeWait == nil { s.pendingClose = cont }
+                    return s.closeErrorBeforeWait
+                }
+                if let earlyError { cont.resume(throwing: earlyError) }
             }
         } onCancel: {
             let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
@@ -113,6 +124,7 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         let parked = state.withLock { s -> CheckedContinuation<Void, any Error>? in
             let p = s.pendingClose
             s.pendingClose = nil
+            if p == nil { s.closeErrorBeforeWait = error }
             return p
         }
         parked?.resume(throwing: error)

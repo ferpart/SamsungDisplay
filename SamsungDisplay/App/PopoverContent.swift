@@ -13,6 +13,7 @@ struct PopoverContent: View {
                 switch controller.state {
                 case .noIP: setUpSection
                 case .unauthorized: recoverySection
+                case .certificateMismatch: certificateMismatchSection
                 default: controls
                 }
                 Divider().padding(.horizontal, 8)
@@ -86,6 +87,14 @@ struct PopoverContent: View {
             .padding(.vertical, 4)
     }
 
+    private var certificateMismatchSection: some View {
+        Text("The monitor certificate changed. If you did not reset the monitor, another device may pose as it. If you trust this network, select Wipe token and re-pair in Settings.")
+            .font(.callout)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+    }
+
     private var statusText: String {
         controller.state == .noIP ? "Not set up" : controller.statusMessage
     }
@@ -94,7 +103,7 @@ struct PopoverContent: View {
         switch controller.state {
         case .connected: .green
         case .connecting: .yellow
-        case .disconnected, .noIP, .unauthorized: .red
+        case .disconnected, .noIP, .unauthorized, .certificateMismatch: .red
         }
     }
 

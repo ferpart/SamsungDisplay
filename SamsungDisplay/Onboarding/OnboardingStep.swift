@@ -14,7 +14,7 @@ enum OnboardingStep: Equatable {
         guard let storedIP, !storedIP.isEmpty else { return .findMonitor }
         switch state {
         case .noIP: return .findMonitor
-        case .unauthorized: return .denied
+        case .unauthorized, .certificateMismatch: return .denied
         case .connecting, .disconnected: return .pairing
         case .connected: return keysGranted || keysSkipped ? .done : .keys
         }

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var launchAtLogin = false
     @State private var appearance = AppearanceMode.automatic
     @State private var launchAtLoginError: String?
+    @State private var ipRejected = false
     @State private var isConfirmingForget = false
 
     var body: some View {
@@ -32,7 +33,10 @@ struct SettingsView: View {
 
     private var monitorSection: some View {
         Section {
-            ManualIPField(draft: $ipDraft, buttonTitle: "Save and reconnect") { controller.connect(to: $0) }
+            ManualIPField(draft: $ipDraft, buttonTitle: "Save and reconnect") { ipRejected = !controller.connect(to: $0) }
+            if ipRejected {
+                Text("Enter an IPv4 address, for example 192.168.1.10.").font(.caption).foregroundStyle(.red)
+            }
             DiscoveredMonitorsView(discovery: discovery) { monitor in
                 ipDraft = monitor.ip
                 controller.connect(to: monitor.ip)
@@ -54,6 +58,9 @@ struct SettingsView: View {
                     } message: {
                         Text("The monitor asks you to select Allow again.")
                     }
+            }
+            if controller.state == .certificateMismatch {
+                Text(ConnectionController.certificateMismatchExplanation).font(.caption).foregroundStyle(.red)
             }
         } header: {
             Text("Monitor")

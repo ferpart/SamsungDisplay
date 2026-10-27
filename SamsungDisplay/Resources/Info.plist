@@ -24,9 +24,5 @@
     <true/>
     <key>NSLocalNetworkUsageDescription</key>
     <string>SamsungDisplay needs access to your local network to communicate with your Samsung monitor.</string>
-    <key>NSBonjourServices</key>
-    <array>
-        <string>_samsungcast._tcp</string>
-    </array>
 </dict>
 </plist>

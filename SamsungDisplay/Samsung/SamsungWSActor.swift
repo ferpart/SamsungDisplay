@@ -18,6 +18,12 @@ enum SamsungWSError: Error, Sendable {
     case unauthorized
     /// `sendKey` / `disconnect` called without a successful `connect` first.
     case notConnected
+    case certificateMismatch
+}
+
+struct SamsungConnection: Sendable, Equatable {
+    let token: String
+    let certificateSHA256: String?
 }
 
 /// Swift actor wrapping `URLSessionWebSocketTask` for the Samsung Tizen remote.
@@ -70,31 +76,19 @@ actor SamsungWSActor {
         self.appName = appName
     }
 
-    /// Open a Samsung remote WebSocket and resolve the auth token.
-    ///
-    /// - Parameters:
-    ///   - ip: Monitor IP on the LAN. Used both as the WebSocket host and as
-    ///         the pinned `allowedHost` on `SamsungTLSDelegate`.
-    ///   - token: Optional saved token from a previous pairing. If `nil`, the
-    ///            monitor will show a pairing popup; if non-nil, the monitor
-    ///            should silently accept the existing pairing.
-    /// - Returns: A non-empty pairing token. If the input `token` was non-nil
-    ///   and the monitor did not re-issue one, returns the input unchanged.
-    /// - Throws: `SamsungWSError.connectionTimeout` on 30s no-frame guard,
-    ///   `SamsungWSError.unauthorized` on explicit reject,
-    ///   `SamsungWSError.noTokenInResponse` if the loop ends without resolution.
-    func connect(to ip: String, token: String?) async throws -> String {
+    func connect(to ip: String, token: String?, pinnedCertificateSHA256: String?) async throws -> SamsungConnection {
         try await firstSuccessfulPort(samsungRemotePorts) { port in
-            try await connect(to: ip, port: port, token: token)
+            try await connect(to: ip, port: port, token: token, pinnedCertificateSHA256: pinnedCertificateSHA256)
         }
     }
 
-    private func connect(to ip: String, port: Int, token: String?) async throws -> String {
+    private func connect(to ip: String, port: Int, token: String?,
+                         pinnedCertificateSHA256: String?) async throws -> SamsungConnection {
         // Tear down any previous connection so callers can call connect again
         // after a disconnect without leaking state.
         await disconnect()
 
-        let pinned = SamsungTLSDelegate(allowedHost: ip)
+        let pinned = SamsungTLSDelegate(allowedHost: ip, pinnedCertificateSHA256: pinnedCertificateSHA256)
         self.delegate = pinned
 
         let urlSession = URLSession(configuration: .default,
@@ -102,17 +96,30 @@ actor SamsungWSActor {
                                     delegateQueue: nil)
         self.session = urlSession
 
-        let url = samsungWebSocketURL(host: ip, appName: appName, token: token, port: port)
+        guard let url = samsungWebSocketURL(host: ip, appName: appName, token: token, port: port) else {
+            throw URLError(.badURL)
+        }
         logOutgoingURL(url)
 
         let wsTask = urlSession.webSocketTask(with: url)
         self.task = wsTask
         wsTask.resume()
 
+        let result: String
+        do {
+            result = try await receiveFirstToken(task: wsTask, inputToken: token)
+        } catch where pinned.rejectedCertificate {
+            throw SamsungWSError.certificateMismatch
+        }
+        startLiveTask(task: wsTask)
+        return SamsungConnection(token: result, certificateSHA256: pinned.acceptedCertificateSHA256)
+    }
+
+    private func receiveFirstToken(task wsTask: URLSessionWebSocketTask, inputToken token: String?) async throws -> String {
         // 30-second guard against the silent-hang failure mode. We race the
         // receive loop against a sleep; whichever finishes first wins, and
         // the loser is cancelled.
-        let result = try await withThrowingTaskGroup(of: String.self) { group in
+        try await withThrowingTaskGroup(of: String.self) { group in
             group.addTask { [weak self] in
                 guard let self else { throw SamsungWSError.notConnected }
                 return try await self.receiveLoop(task: wsTask, inputToken: token)
@@ -126,10 +133,6 @@ actor SamsungWSActor {
             group.cancelAll()
             return result
         }
-        // Start the post-handshake liveness work. From here on, any close,
-        // receive error, or heartbeat timeout will surface via waitForClose().
-        startLiveTask(task: wsTask)
-        return result
     }
 
     /// Send a single key command over the open WebSocket. Requires `connect`.
@@ -306,15 +309,12 @@ actor SamsungWSActor {
             do {
                 message = try await task.receive()
             } catch {
-                logger.error("receive failed: \(String(describing: error), privacy: .public)")
+                logger.error("receive failed: \(error.redactedDescription, privacy: .public)")
                 throw error
             }
 
             switch message {
             case .string(let text):
-                #if DEBUG
-                logger.debug("frame: \(text, privacy: .public)")
-                #endif
                 if let resolved = try handleTextFrame(text, inputToken: inputToken) {
                     return resolved
                 }
@@ -380,7 +380,7 @@ actor SamsungWSActor {
 /// Declared at module scope so the test target can pick it up via
 /// `@testable import SamsungDisplay`.
 protocol SamsungWSDriving: Sendable {
-    func connect(to ip: String, token: String?) async throws -> String
+    func connect(to ip: String, token: String?, pinnedCertificateSHA256: String?) async throws -> SamsungConnection
     func sendKey(_ key: SamsungCommand.Key) async throws
     func disconnect() async
     /// Suspends until the open WebSocket disconnects.

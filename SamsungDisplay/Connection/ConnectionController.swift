@@ -36,7 +36,10 @@ final class ConnectionController {
     private let pathObserver: any NetworkPathObserving
     private let preferences: AppPreferences
     private let tokens: TokenStore
+    private let pins: TokenStore
     private let policy: ReconnectPolicy
+
+    static let certificateMismatchExplanation = "The monitor certificate changed. If you did not reset the monitor, another device may pose as it. Re-pair only if you trust this network."
 
     private var lifecycleTask: Task<Void, Never>?
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
@@ -48,6 +51,7 @@ final class ConnectionController {
         pathObserver: any NetworkPathObserving = NetworkPathObserver(),
         preferences: AppPreferences = .shared,
         tokens: TokenStore = .shared,
+        pins: TokenStore = .certificatePins,
         policy: ReconnectPolicy = .default
     ) {
         self.ws = ws
@@ -55,6 +59,7 @@ final class ConnectionController {
         self.pathObserver = pathObserver
         self.preferences = preferences
         self.tokens = tokens
+        self.pins = pins
         self.policy = policy
         self.pathObserver.onPathSatisfied = { [weak self] in self?.kickReconnect() }
         self.pathObserver.onPathLost = { [weak self] in self?.handlePathLost() }
@@ -82,10 +87,10 @@ final class ConnectionController {
         if lifecycleTask != nil {
             return
         }
-        guard let ip = preferences.monitorIP, !ip.isEmpty else {
+        guard let ip = preferences.monitorIP, isIPv4Address(ip) else {
             state = .noIP
             statusMessage = "Not connected — set monitor IP in Settings"
-            append("bootstrap: no IP configured")
+            append("bootstrap: no valid IP configured")
             return
         }
         start(ip: ip)
@@ -105,7 +110,7 @@ final class ConnectionController {
         do {
             try await ws.sendKey(key)
         } catch {
-            append("send \(key.rawValue) failed: \(error)")
+            append("send \(key.rawValue) failed: \(error.redactedDescription)")
         }
     }
 
@@ -175,7 +180,7 @@ final class ConnectionController {
                 start(ip: ip)
             }
         } catch {
-            append("wake-on-LAN failed: \(error)")
+            append("wake-on-LAN failed: \(error.redactedDescription)")
         }
     }
 
@@ -187,9 +192,16 @@ final class ConnectionController {
         send(.hdmi)
     }
 
-    func connect(to ip: String) {
+    @discardableResult
+    func connect(to ip: String) -> Bool {
+        guard isIPv4Address(ip) else {
+            statusMessage = "Enter an IPv4 address, for example 192.168.1.10"
+            append("rejected monitor address")
+            return false
+        }
         preferences.monitorIP = ip
         start(ip: ip)
+        return true
     }
 
     func forgetMonitor() {
@@ -203,13 +215,14 @@ final class ConnectionController {
     /// Sticky-deny recovery: drop the keychain token, then restart the loop.
     /// Reads token AFTER delete to confirm it's gone (RESEARCH.md Pitfall #4).
     func wipeTokenAndReconnect() {
-        tokens.delete()
-        append("token wiped")
         guard let ip = preferences.monitorIP, !ip.isEmpty else {
             state = .noIP
             statusMessage = "Not connected — set monitor IP in Settings"
             return
         }
+        tokens.delete(for: ip)
+        pins.delete(for: ip)
+        append("token wiped")
         start(ip: ip)
     }
 
@@ -248,7 +261,7 @@ final class ConnectionController {
     /// the lifecycle task cancels the current `Task.sleep` so we retry
     /// immediately (RESEARCH.md Pattern 4 + Pitfall #2).
     private func kickReconnect() {
-        guard !isUserDisconnected, state != .connected, state != .unauthorized else { return }
+        guard !isUserDisconnected, state != .connected, state != .unauthorized, state != .certificateMismatch else { return }
         guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
         append("path satisfied — kicking reconnect")
         start(ip: ip)
@@ -262,7 +275,7 @@ final class ConnectionController {
     /// again, which is exactly the desired UX: visible "Reconnecting…" in
     /// the popover + backoff schedule visible in Settings → Logs.
     private func handlePathLost() {
-        guard !isUserDisconnected, state != .unauthorized, state != .noIP else { return }
+        guard !isUserDisconnected, state != .unauthorized, state != .certificateMismatch, state != .noIP else { return }
         append("path lost")
         state = .connecting
         statusMessage = "Reconnecting…"
@@ -279,12 +292,17 @@ final class ConnectionController {
         while !Task.isCancelled {
             state = .connecting
             statusMessage = "Reconnecting…"
-            let token = tokens.load()
+            let token = tokens.load(for: ip)
+            let pin = pins.load(for: ip)
             do {
-                let newToken = try await ws.connect(to: ip, token: token)
-                if newToken != token {
-                    do { try tokens.save(newToken) }
-                    catch { append("token save failed: \(error)") }
+                let connection = try await ws.connect(to: ip, token: token, pinnedCertificateSHA256: pin)
+                if connection.token != token {
+                    do { try tokens.save(connection.token, for: ip) }
+                    catch { append("token save failed: \(error.redactedDescription)") }
+                }
+                if pin == nil, let fingerprint = connection.certificateSHA256 {
+                    do { try pins.save(fingerprint, for: ip) }
+                    catch { append("certificate pin save failed: \(error.redactedDescription)") }
                 }
                 state = .connected
                 statusMessage = "Connected"
@@ -303,9 +321,14 @@ final class ConnectionController {
                 } catch is CancellationError {
                     return    // user action or path-lost cancelled us
                 } catch {
-                    append("connection lost: \(error)")
+                    append("connection lost: \(error.redactedDescription)")
                     // Fall through to the backoff + retry below
                 }
+            } catch SamsungWSError.certificateMismatch {
+                state = .certificateMismatch
+                statusMessage = "Certificate changed — re-pair in Settings"
+                append("certificate mismatch")
+                return
             } catch SamsungWSError.unauthorized {
                 state = .unauthorized
                 statusMessage = "Pairing rejected — see recovery steps"
@@ -314,7 +337,7 @@ final class ConnectionController {
             } catch is CancellationError {
                 return
             } catch {
-                append("connect failed: \(error)")
+                append("connect failed: \(error.redactedDescription)")
             }
 
             let delay = policy.nextDelay(after: lastDelay)
@@ -331,7 +354,7 @@ final class ConnectionController {
             monitorName = info.name
             powerState = PowerState(apiValue: info.powerState)
         } catch {
-            append("device info failed: \(error)")
+            append("device info failed: \(error.redactedDescription)")
         }
     }
 

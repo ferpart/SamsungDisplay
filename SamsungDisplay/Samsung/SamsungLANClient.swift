@@ -16,7 +16,8 @@ actor SamsungLANClient: SamsungLANDriving {
     }
 
     func deviceInfo(host: String) async throws -> SamsungDeviceInfo {
-        let (data, _) = try await session.data(from: SamsungDeviceInfo.url(host: host))
+        guard let url = SamsungDeviceInfo.url(host: host) else { throw URLError(.badURL) }
+        let (data, _) = try await session.data(from: url)
         return try SamsungDeviceInfo.decode(data)
     }
 

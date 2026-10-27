@@ -36,9 +36,12 @@ final class MonitorDiscovery {
             return
         }
 
-        group.setReceiveHandler(maximumMessageSize: 65_535, rejectOversizedMessages: true) { [weak self] _, content, _ in
-            guard let content, let response = SSDPResponse(String(decoding: content, as: UTF8.self)) else { return }
-            Task { @MainActor [weak self] in await self?.handle(response) }
+        group.setReceiveHandler(maximumMessageSize: 65_535, rejectOversizedMessages: true) { [weak self] message, content, _ in
+            guard let content,
+                  let response = SSDPResponse(String(decoding: content, as: UTF8.self)),
+                  let host = Self.trustedHost(of: response, sender: message.remoteEndpoint)
+            else { return }
+            Task { @MainActor [weak self] in await self?.handle(response, host: host) }
         }
         group.stateUpdateHandler = { [logger] state in
             guard case .ready = state else {
@@ -57,17 +60,31 @@ final class MonitorDiscovery {
         group.cancel()
     }
 
-    private func handle(_ response: SSDPResponse) async {
+    nonisolated static func trustedHost(of response: SSDPResponse, sender: NWEndpoint?) -> String? {
+        guard case .hostPort(.ipv4(let address), _) = sender, isPrivate(address) else { return nil }
+        let senderHost = "\(address)"
+        return response.host == senderHost ? senderHost : nil
+    }
+
+    private nonisolated static func isPrivate(_ address: IPv4Address) -> Bool {
+        let octets = Array(address.rawValue)
+        switch (octets[0], octets[1]) {
+        case (10, _), (172, 16...31), (192, 168), (169, 254): return true
+        default: return false
+        }
+    }
+
+    private func handle(_ response: SSDPResponse, host: String) async {
         guard let target = response.searchTarget,
               SSDPResponse.samsungSearchTargets.contains(target),
-              let host = response.host,
               hostsSeen.insert(host).inserted
         else { return }
 
         do {
             let info = try await lan.deviceInfo(host: host)
-            monitors.removeAll { $0.wifiMac == info.wifiMac }
-            monitors.append(info)
+            monitors.removeAll { $0.ip == host }
+            monitors.append(SamsungDeviceInfo(ip: host, name: info.name, modelName: info.modelName,
+                                              wifiMac: info.wifiMac, powerState: info.powerState))
         } catch {
             hostsSeen.remove(host)
             logger.notice("no Tizen info at \(host, privacy: .public): \(String(describing: error), privacy: .public)")

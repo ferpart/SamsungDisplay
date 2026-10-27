@@ -10,25 +10,25 @@ final class ConnectionControllerTests: XCTestCase {
     private var defaults: UserDefaults!
     private var preferences: AppPreferences!
     private var tokens: TokenStore!
-    private let suiteName = "ConnectionControllerTests.suite"
+    private var pins: TokenStore!
+    private var suiteName: String!
 
     override func setUp() async throws {
         spy = SpyWSDriver()
         lan = FakeLANDriver()
         path = FakePathObserver()
+        suiteName = "ConnectionControllerTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
-        defaults.removePersistentDomain(forName: suiteName)
         preferences = AppPreferences(defaults: defaults)
         // Unique keychain service per test run so we don't pollute the real
         // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
-        tokens = TokenStore(
-            service: "tests.SamsungDisplay.token.\(UUID().uuidString)",
-            account: "test"
-        )
+        tokens = TokenStore(service: "tests.SamsungDisplay.token.\(UUID().uuidString)")
+        pins = TokenStore(service: "tests.SamsungDisplay.pin.\(UUID().uuidString)")
     }
 
     override func tearDown() async throws {
-        tokens.delete()
+        tokens.deleteAll()
+        pins.deleteAll()
         defaults.removePersistentDomain(forName: suiteName)
         spy = nil
         lan = nil
@@ -36,6 +36,7 @@ final class ConnectionControllerTests: XCTestCase {
         defaults = nil
         preferences = nil
         tokens = nil
+        pins = nil
     }
 
     // MARK: - Helpers
@@ -63,6 +64,7 @@ final class ConnectionControllerTests: XCTestCase {
             pathObserver: path,
             preferences: preferences,
             tokens: tokens,
+            pins: pins,
             policy: policy
         )
     }
@@ -144,14 +146,14 @@ final class ConnectionControllerTests: XCTestCase {
         preferences.monitorIP = "192.168.1.10"
         spy.nextConnectOutcome = .hang
 
-        try tokens.save("old-token")
-        XCTAssertEqual(tokens.load(), "old-token")
+        try tokens.save("old-token", for: "192.168.1.10")
+        XCTAssertEqual(tokens.load(for: "192.168.1.10"), "old-token")
 
         let controller = makeController()
         controller.wipeTokenAndReconnect()
 
         try await waitFor { self.spy.connectCalls.count == 1 }
-        XCTAssertNil(tokens.load(), "wipeTokenAndReconnect must delete the keychain item")
+        XCTAssertNil(tokens.load(for: "192.168.1.10"), "wipeTokenAndReconnect must delete the keychain item")
         XCTAssertEqual(spy.connectCalls.first?.ip, "192.168.1.10")
         XCTAssertNil(
             spy.connectCalls.first?.token,
@@ -339,6 +341,68 @@ final class ConnectionControllerTests: XCTestCase {
         try await waitFor { controller.state == .connected }
         XCTAssertEqual(preferences.monitorIP, "192.168.1.77")
         controller.stop()
+    }
+
+    func test_connectTo_newIP_doesNotSendTokenOfAnotherIP() async throws {
+        try tokens.save("token-for-old-ip", for: "192.168.1.10")
+        spy.nextConnectOutcome = .success(token: "token-for-new-ip")
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertNil(spy.connectCalls.first?.token)
+        XCTAssertEqual(tokens.load(for: "192.168.1.77"), "token-for-new-ip")
+        XCTAssertEqual(tokens.load(for: "192.168.1.10"), "token-for-old-ip")
+        controller.stop()
+    }
+
+    func test_firstConnect_pinsCertificateAndLaterConnectsSendPin() async throws {
+        spy.certificateSHA256 = "first-certificate"
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertNil(spy.connectCalls.first?.pin)
+        XCTAssertEqual(pins.load(for: "192.168.1.77"), "first-certificate")
+
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { self.spy.connectCalls.count == 2 }
+        XCTAssertEqual(spy.connectCalls.last?.pin, "first-certificate")
+        controller.stop()
+    }
+
+    func test_certificateMismatch_stopsLoop() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .error(SamsungWSError.certificateMismatch)
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .certificateMismatch }
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertEqual(spy.connectCalls.count, 1)
+    }
+
+    func test_wipeToken_clearsCertificatePin() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .hang
+        try pins.save("old-certificate", for: "192.168.1.10")
+        let controller = makeController()
+        controller.wipeTokenAndReconnect()
+        try await waitFor { self.spy.connectCalls.count == 1 }
+        XCTAssertNil(pins.load(for: "192.168.1.10"))
+        XCTAssertNil(spy.connectCalls.first?.pin)
+        controller.stop()
+    }
+
+    func test_connectTo_rejectsAddressThatIsNotIPv4() {
+        let controller = makeController()
+        XCTAssertFalse(controller.connect(to: "fe80::1"))
+        XCTAssertNil(preferences.monitorIP)
+        XCTAssertTrue(spy.connectCalls.isEmpty)
+    }
+
+    func test_bootstrap_withInvalidStoredIP_staysInNoIP() {
+        preferences.monitorIP = "a b"
+        let controller = makeController()
+        controller.bootstrap()
+        XCTAssertEqual(controller.state, .noIP)
     }
 
     func test_forgetMonitor_clearsIPAndReturnsToNoIP() async throws {

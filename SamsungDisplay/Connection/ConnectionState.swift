@@ -15,6 +15,7 @@ enum ConnectionState: Sendable, Equatable {
     case connected
     /// `ms.channel.unauthorized` received. Loop is stopped; user must wipe token.
     case unauthorized
+    case certificateMismatch
 }
 
 extension ConnectionState {
@@ -22,7 +23,7 @@ extension ConnectionState {
         switch self {
         case .connected: "MenuBarBars3"
         case .connecting: "MenuBarBars\(animationStep % 4)"
-        case .disconnected, .noIP, .unauthorized: "MenuBarBars0"
+        case .disconnected, .noIP, .unauthorized, .certificateMismatch: "MenuBarBars0"
         }
     }
 }

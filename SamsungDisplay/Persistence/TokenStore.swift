@@ -5,48 +5,26 @@ enum TokenStoreError: Error {
     case unhandled(OSStatus)
 }
 
-/// Keychain-backed CRUD wrapper for the Samsung auth token.
-///
-/// Per RESEARCH.md Pitfall #3, the Samsung monitor's pairing acceptance is a
-/// one-shot deal: once the user taps "Allow", the returned token MUST be
-/// persisted before the app exits. UserDefaults is unacceptable (leaks across
-/// apps on the same host); only the macOS Keychain is appropriate.
-///
-/// `TokenStore.shared` is the singleton used by production callers. Tests
-/// construct instances with unique service names per test to avoid polluting
-/// the real keychain item.
 struct TokenStore {
     let service: String
-    let account: String
 
-    /// The Keychain accessibility class applied to stored tokens. Exposed so
-    /// tests can assert the policy without relying on `SecItemCopyMatching`
-    /// returning the `pdmn` attribute (macOS does not include it in attribute
-    /// queries for generic password items).
-    nonisolated(unsafe) static let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlock
+    static let usesDataProtectionKeychain = hasEntitlement("keychain-access-groups")
 
-    static let shared = TokenStore(
-        service: "com.fp.SamsungDisplay.samsungToken",
-        account: "default"
-    )
+    static var accessibility: CFString {
+        usesDataProtectionKeychain ? kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly : kSecAttrAccessibleAfterFirstUnlock
+    }
 
-    /// Stores `token` in the Keychain, replacing any prior value for this
-    /// service+account pair. The item is created with
-    /// `kSecAttrAccessibleAfterFirstUnlock` so the token survives reboot
-    /// before the user's first unlock of the session.
-    func save(_ token: String) throws {
-        let data = Data(token.utf8)
-        let baseQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        // Upsert semantics: delete then add. Avoids the "errSecDuplicateItem"
-        // path entirely and keeps the implementation small.
+    static let shared = TokenStore(service: "com.fp.SamsungDisplay.samsungToken")
+    static let certificatePins = TokenStore(service: "com.fp.SamsungDisplay.certificatePin")
+
+    private static let legacyAccount = "default"
+
+    func save(_ token: String, for ip: String) throws {
+        let baseQuery = query(account: ip)
         SecItemDelete(baseQuery as CFDictionary)
 
         var addQuery = baseQuery
-        addQuery[kSecValueData as String] = data
+        addQuery[kSecValueData as String] = Data(token.utf8)
         addQuery[kSecAttrAccessible as String] = TokenStore.accessibility
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
@@ -55,17 +33,10 @@ struct TokenStore {
         }
     }
 
-    /// Returns the stored token if present, or `nil` if no item exists for
-    /// this service+account. Does NOT throw on a missing item — callers
-    /// treat "no token" as the normal "not paired yet" state.
-    func load() -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+    func load(for ip: String) -> String? {
+        var query = query(account: ip)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess, let data = item as? Data else {
@@ -74,14 +45,42 @@ struct TokenStore {
         return String(data: data, encoding: .utf8)
     }
 
-    /// Removes the stored token for this service+account, if any. No-op if
-    /// nothing is stored.
-    func delete() {
-        let query: [String: Any] = [
+    func delete(for ip: String) {
+        SecItemDelete(query(account: ip) as CFDictionary)
+    }
+
+    func deleteAll() {
+        var query = query(account: nil)
+        query[kSecMatchLimit as String] = kSecMatchLimitAll
+        SecItemDelete(query as CFDictionary)
+    }
+
+    func deleteLegacyItems() {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecMatchLimit as String: kSecMatchLimitAll,
         ]
+        if !Self.usesDataProtectionKeychain {
+            query[kSecAttrAccount as String] = Self.legacyAccount
+        }
         SecItemDelete(query as CFDictionary)
+    }
+
+    private func query(account: String?) -> [String: Any] {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+        ]
+        query[kSecAttrAccount as String] = account
+        if Self.usesDataProtectionKeychain {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
+        return query
+    }
+
+    private static func hasEntitlement(_ name: String) -> Bool {
+        guard let task = SecTaskCreateFromSelf(nil) else { return false }
+        return SecTaskCopyValueForEntitlement(task, name as CFString, nil) != nil
     }
 }
