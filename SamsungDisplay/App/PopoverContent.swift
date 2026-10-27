@@ -79,15 +79,11 @@ struct PopoverContent: View {
     }
 
     private var recoverySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Your monitor rejected the app. On the monitor, open Settings → All Settings → Connections → Device Connect Manager → Device List → SamsungDisplay → Allow.")
-                .font(.callout)
-                .fixedSize(horizontal: false, vertical: true)
-            Button("Wipe token and reconnect") { controller.wipeTokenAndReconnect() }
-                .buttonStyle(.glassProminent)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        Text("The monitor rejected the app. Allow SamsungDisplay in the Device Connect Manager of the monitor. Then select Wipe token and re-pair in Settings.")
+            .font(.callout)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
     }
 
     private var statusText: String {
