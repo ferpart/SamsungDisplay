@@ -19,6 +19,7 @@ struct TokenStore {
     nonisolated(unsafe) static let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlock
 
     static let shared = TokenStore(service: "com.fp.SamsungDisplay.samsungToken")
+    static let certificatePins = TokenStore(service: "com.fp.SamsungDisplay.certificatePin")
 
     private static let legacyAccount = "default"
 

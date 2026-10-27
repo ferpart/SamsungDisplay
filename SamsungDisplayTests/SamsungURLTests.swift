@@ -131,6 +131,20 @@ final class SamsungURLTests: XCTestCase {
         XCTAssertEqual(tried, [8002])
     }
 
+    func test_fallback_doesNotRetryAfterCertificateMismatch() async {
+        var tried: [Int] = []
+        do {
+            _ = try await firstSuccessfulPort(samsungRemotePorts) { port in
+                tried.append(port)
+                throw SamsungWSError.certificateMismatch
+            }
+            XCTFail("expected certificateMismatch")
+        } catch {
+            XCTAssertEqual(error as? SamsungWSError, .certificateMismatch)
+        }
+        XCTAssertEqual(tried, [8002])
+    }
+
     func test_fallback_throwsLastErrorWhenAllPortsFail() async {
         do {
             _ = try await firstSuccessfulPort(samsungRemotePorts) { port -> Int in

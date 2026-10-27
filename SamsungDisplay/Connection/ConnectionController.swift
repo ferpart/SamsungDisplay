@@ -35,7 +35,10 @@ final class ConnectionController {
     private let pathObserver: any NetworkPathObserving
     private let preferences: AppPreferences
     private let tokens: TokenStore
+    private let pins: TokenStore
     private let policy: ReconnectPolicy
+
+    static let certificateMismatchExplanation = "The monitor certificate changed. If you did not reset the monitor, another device may pose as it. Re-pair only if you trust this network."
 
     private var lifecycleTask: Task<Void, Never>?
     private let logger = Logger(subsystem: "com.fp.SamsungDisplay", category: "samsung-conn")
@@ -47,6 +50,7 @@ final class ConnectionController {
         pathObserver: any NetworkPathObserving = NetworkPathObserver(),
         preferences: AppPreferences = .shared,
         tokens: TokenStore = .shared,
+        pins: TokenStore = .certificatePins,
         policy: ReconnectPolicy = .default
     ) {
         self.ws = ws
@@ -54,6 +58,7 @@ final class ConnectionController {
         self.pathObserver = pathObserver
         self.preferences = preferences
         self.tokens = tokens
+        self.pins = pins
         self.policy = policy
         self.pathObserver.onPathSatisfied = { [weak self] in self?.kickReconnect() }
         self.pathObserver.onPathLost = { [weak self] in self?.handlePathLost() }
@@ -215,6 +220,7 @@ final class ConnectionController {
             return
         }
         tokens.delete(for: ip)
+        pins.delete(for: ip)
         append("token wiped")
         start(ip: ip)
     }
@@ -243,7 +249,7 @@ final class ConnectionController {
     /// the lifecycle task cancels the current `Task.sleep` so we retry
     /// immediately (RESEARCH.md Pattern 4 + Pitfall #2).
     private func kickReconnect() {
-        guard state != .connected, state != .unauthorized else { return }
+        guard state != .connected, state != .unauthorized, state != .certificateMismatch else { return }
         guard let ip = preferences.monitorIP, !ip.isEmpty else { return }
         append("path satisfied — kicking reconnect")
         start(ip: ip)
@@ -257,7 +263,7 @@ final class ConnectionController {
     /// again, which is exactly the desired UX: visible "Reconnecting…" in
     /// the popover + backoff schedule visible in Settings → Logs.
     private func handlePathLost() {
-        guard state != .unauthorized, state != .noIP else { return }
+        guard state != .unauthorized, state != .certificateMismatch, state != .noIP else { return }
         append("path lost")
         state = .connecting
         statusMessage = "Reconnecting…"
@@ -275,11 +281,16 @@ final class ConnectionController {
             state = .connecting
             statusMessage = "Reconnecting…"
             let token = tokens.load(for: ip)
+            let pin = pins.load(for: ip)
             do {
-                let newToken = try await ws.connect(to: ip, token: token)
-                if newToken != token {
-                    do { try tokens.save(newToken, for: ip) }
+                let connection = try await ws.connect(to: ip, token: token, pinnedCertificateSHA256: pin)
+                if connection.token != token {
+                    do { try tokens.save(connection.token, for: ip) }
                     catch { append("token save failed: \(error.redactedDescription)") }
+                }
+                if pin == nil, let fingerprint = connection.certificateSHA256 {
+                    do { try pins.save(fingerprint, for: ip) }
+                    catch { append("certificate pin save failed: \(error.redactedDescription)") }
                 }
                 state = .connected
                 statusMessage = "Connected"
@@ -301,6 +312,11 @@ final class ConnectionController {
                     append("connection lost: \(error.redactedDescription)")
                     // Fall through to the backoff + retry below
                 }
+            } catch SamsungWSError.certificateMismatch {
+                state = .certificateMismatch
+                statusMessage = "Certificate changed — re-pair in Settings"
+                append("certificate mismatch")
+                return
             } catch SamsungWSError.unauthorized {
                 state = .unauthorized
                 statusMessage = "Pairing rejected — see recovery steps"

@@ -29,7 +29,8 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
     }
 
     private struct State {
-        var connectCalls: [(ip: String, token: String?)] = []
+        var connectCalls: [(ip: String, token: String?, pin: String?)] = []
+        var certificateSHA256: String? = "spy-certificate"
         var sendKeyCalls: [SamsungCommand.Key] = []
         var disconnectCalls: Int = 0
         var nextConnectOutcome: ConnectOutcome = .success(token: "spy-token")
@@ -40,7 +41,7 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
     private let state = OSAllocatedUnfairLock<State>(initialState: State())
 
     // Recorded calls (read-only views for assertions).
-    var connectCalls: [(ip: String, token: String?)] {
+    var connectCalls: [(ip: String, token: String?, pin: String?)] {
         state.withLock { $0.connectCalls }
     }
     var sendKeyCalls: [SamsungCommand.Key] {
@@ -55,19 +56,23 @@ final class SpyWSDriver: SamsungWSDriving, @unchecked Sendable {
         get { state.withLock { $0.nextConnectOutcome } }
         set { state.withLock { $0.nextConnectOutcome = newValue } }
     }
+    var certificateSHA256: String? {
+        get { state.withLock { $0.certificateSHA256 } }
+        set { state.withLock { $0.certificateSHA256 = newValue } }
+    }
     var nextSendKeyError: (any Error)? {
         get { state.withLock { $0.nextSendKeyError } }
         set { state.withLock { $0.nextSendKeyError = newValue } }
     }
 
-    func connect(to ip: String, token: String?) async throws -> String {
-        let outcome = state.withLock { s -> ConnectOutcome in
-            s.connectCalls.append((ip, token))
-            return s.nextConnectOutcome
+    func connect(to ip: String, token: String?, pinnedCertificateSHA256: String?) async throws -> SamsungConnection {
+        let (outcome, certificate) = state.withLock { s -> (ConnectOutcome, String?) in
+            s.connectCalls.append((ip, token, pinnedCertificateSHA256))
+            return (s.nextConnectOutcome, s.certificateSHA256)
         }
         switch outcome {
         case .success(let token):
-            return token
+            return SamsungConnection(token: token, certificateSHA256: certificate)
         case .unauthorized:
             throw SamsungWSError.unauthorized
         case .error(let e):

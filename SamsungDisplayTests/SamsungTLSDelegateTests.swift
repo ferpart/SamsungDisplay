@@ -114,6 +114,48 @@ final class SamsungTLSDelegateTests: XCTestCase {
         XCTAssertNotNil(capturedCredential, "matching host must produce a credential")
     }
 
+    func test_firstConnection_acceptsAndReportsLeafFingerprint() throws {
+        let sut = SamsungTLSDelegate(allowedHost: Self.allowedHost)
+        let challenge = makeChallenge(host: Self.allowedHost, authenticationMethod: NSURLAuthenticationMethodServerTrust)
+        let trust = try XCTUnwrap(challenge.protectionSpace.serverTrust)
+
+        var capturedDisposition: URLSession.AuthChallengeDisposition?
+        sut.urlSession(URLSession.shared, didReceive: challenge) { disposition, _ in capturedDisposition = disposition }
+
+        XCTAssertEqual(capturedDisposition, .useCredential)
+        XCTAssertEqual(sut.acceptedCertificateSHA256, SamsungTLSDelegate.leafCertificateSHA256(of: trust))
+        XCTAssertEqual(sut.acceptedCertificateSHA256?.count, 64)
+    }
+
+    func test_matchingPin_usesCredential() throws {
+        let challenge = makeChallenge(host: Self.allowedHost, authenticationMethod: NSURLAuthenticationMethodServerTrust)
+        let pin = SamsungTLSDelegate.leafCertificateSHA256(of: try XCTUnwrap(challenge.protectionSpace.serverTrust))
+        let sut = SamsungTLSDelegate(allowedHost: Self.allowedHost, pinnedCertificateSHA256: pin)
+
+        var capturedDisposition: URLSession.AuthChallengeDisposition?
+        sut.urlSession(URLSession.shared, didReceive: challenge) { disposition, _ in capturedDisposition = disposition }
+
+        XCTAssertEqual(capturedDisposition, .useCredential)
+        XCTAssertFalse(sut.rejectedCertificate)
+    }
+
+    func test_mismatchedPin_cancelsChallenge() {
+        let sut = SamsungTLSDelegate(allowedHost: Self.allowedHost, pinnedCertificateSHA256: String(repeating: "0", count: 64))
+        let challenge = makeChallenge(host: Self.allowedHost, authenticationMethod: NSURLAuthenticationMethodServerTrust)
+
+        var capturedDisposition: URLSession.AuthChallengeDisposition?
+        var capturedCredential: URLCredential?
+        sut.urlSession(URLSession.shared, didReceive: challenge) { disposition, credential in
+            capturedDisposition = disposition
+            capturedCredential = credential
+        }
+
+        XCTAssertEqual(capturedDisposition, .cancelAuthenticationChallenge)
+        XCTAssertNil(capturedCredential)
+        XCTAssertTrue(sut.rejectedCertificate)
+        XCTAssertNil(sut.acceptedCertificateSHA256)
+    }
+
     func test_performDefaultHandling_whenChallengeHostDoesNotMatch() {
         let sut = SamsungTLSDelegate(allowedHost: Self.allowedHost)
         let challenge = makeChallenge(

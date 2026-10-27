@@ -49,8 +49,8 @@ func firstSuccessfulPort<Result>(
     for port in ports {
         do {
             return try await attempt(port)
-        } catch SamsungWSError.unauthorized {
-            throw SamsungWSError.unauthorized
+        } catch let error as SamsungWSError where error == .unauthorized || error == .certificateMismatch {
+            throw error
         } catch is CancellationError {
             throw CancellationError()
         } catch {

@@ -43,6 +43,9 @@ struct SettingsView: View {
             LabeledContent("Pairing") {
                 Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
             }
+            if controller.state == .certificateMismatch {
+                Text(ConnectionController.certificateMismatchExplanation).font(.caption).foregroundStyle(.red)
+            }
         } header: {
             Text("Monitor")
         } footer: {

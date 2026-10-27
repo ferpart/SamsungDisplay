@@ -10,6 +10,7 @@ final class ConnectionControllerTests: XCTestCase {
     private var defaults: UserDefaults!
     private var preferences: AppPreferences!
     private var tokens: TokenStore!
+    private var pins: TokenStore!
     private var suiteName: String!
 
     override func setUp() async throws {
@@ -22,10 +23,12 @@ final class ConnectionControllerTests: XCTestCase {
         // Unique keychain service per test run so we don't pollute the real
         // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
         tokens = TokenStore(service: "tests.SamsungDisplay.token.\(UUID().uuidString)")
+        pins = TokenStore(service: "tests.SamsungDisplay.pin.\(UUID().uuidString)")
     }
 
     override func tearDown() async throws {
         tokens.deleteAll()
+        pins.deleteAll()
         defaults.removePersistentDomain(forName: suiteName)
         spy = nil
         lan = nil
@@ -33,6 +36,7 @@ final class ConnectionControllerTests: XCTestCase {
         defaults = nil
         preferences = nil
         tokens = nil
+        pins = nil
     }
 
     // MARK: - Helpers
@@ -60,6 +64,7 @@ final class ConnectionControllerTests: XCTestCase {
             pathObserver: path,
             preferences: preferences,
             tokens: tokens,
+            pins: pins,
             policy: policy
         )
     }
@@ -347,6 +352,42 @@ final class ConnectionControllerTests: XCTestCase {
         XCTAssertNil(spy.connectCalls.first?.token)
         XCTAssertEqual(tokens.load(for: "192.168.1.77"), "token-for-new-ip")
         XCTAssertEqual(tokens.load(for: "192.168.1.10"), "token-for-old-ip")
+        controller.stop()
+    }
+
+    func test_firstConnect_pinsCertificateAndLaterConnectsSendPin() async throws {
+        spy.certificateSHA256 = "first-certificate"
+        let controller = makeController()
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { controller.state == .connected }
+        XCTAssertNil(spy.connectCalls.first?.pin)
+        XCTAssertEqual(pins.load(for: "192.168.1.77"), "first-certificate")
+
+        controller.connect(to: "192.168.1.77")
+        try await waitFor { self.spy.connectCalls.count == 2 }
+        XCTAssertEqual(spy.connectCalls.last?.pin, "first-certificate")
+        controller.stop()
+    }
+
+    func test_certificateMismatch_stopsLoop() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .error(SamsungWSError.certificateMismatch)
+        let controller = makeController()
+        controller.bootstrap()
+        try await waitFor { controller.state == .certificateMismatch }
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertEqual(spy.connectCalls.count, 1)
+    }
+
+    func test_wipeToken_clearsCertificatePin() async throws {
+        preferences.monitorIP = "192.168.1.10"
+        spy.nextConnectOutcome = .hang
+        try pins.save("old-certificate", for: "192.168.1.10")
+        let controller = makeController()
+        controller.wipeTokenAndReconnect()
+        try await waitFor { self.spy.connectCalls.count == 1 }
+        XCTAssertNil(pins.load(for: "192.168.1.10"))
+        XCTAssertNil(spy.connectCalls.first?.pin)
         controller.stop()
     }
 
