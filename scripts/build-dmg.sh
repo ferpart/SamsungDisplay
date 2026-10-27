@@ -35,7 +35,17 @@ xcodebuild build \
   MARKETING_VERSION="$version" \
   CURRENT_PROJECT_VERSION="$build_number"
 
-ditto "$derived_data/Build/Products/Release/SamsungDisplay.app" "$staging/SamsungDisplay.app"
+app="$derived_data/Build/Products/Release/SamsungDisplay.app"
+
+if [[ -n "${SIGNING_IDENTITY:-}" ]]; then
+  codesign --force --options runtime --timestamp=none \
+    --entitlements "$root/SamsungDisplay/Resources/SamsungDisplay.entitlements" \
+    --sign "$SIGNING_IDENTITY" "$app"
+  codesign --verify --deep --strict "$app"
+  codesign -d -r- "$app"
+fi
+
+ditto "$app" "$staging/SamsungDisplay.app"
 ln -s /Applications "$staging/Applications"
 
 hdiutil create \
