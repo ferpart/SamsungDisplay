@@ -7,9 +7,6 @@ enum TokenStoreError: Error {
 
 /// Keychain-backed store for the Samsung auth token, with one item per monitor IP.
 ///
-/// Team-signed builds carry `keychain-access-groups` and use the data protection
-/// keychain. Ad-hoc builds cannot, so they use the file-based login keychain.
-///
 /// Tests construct instances with unique service names to avoid polluting
 /// the real keychain item.
 struct TokenStore {
