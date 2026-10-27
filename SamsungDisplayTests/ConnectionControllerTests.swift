@@ -10,14 +10,14 @@ final class ConnectionControllerTests: XCTestCase {
     private var defaults: UserDefaults!
     private var preferences: AppPreferences!
     private var tokens: TokenStore!
-    private let suiteName = "ConnectionControllerTests.suite"
+    private var suiteName: String!
 
     override func setUp() async throws {
         spy = SpyWSDriver()
         lan = FakeLANDriver()
         path = FakePathObserver()
+        suiteName = "ConnectionControllerTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
-        defaults.removePersistentDomain(forName: suiteName)
         preferences = AppPreferences(defaults: defaults)
         // Unique keychain service per test run so we don't pollute the real
         // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
