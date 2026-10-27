@@ -10,34 +10,34 @@ extension View {
 }
 
 private struct GlassWindowBody: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView { Tracker() }
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    let isResizable: Bool
 
-    private final class Tracker: NSView {
-        static let containerID = NSUserInterfaceItemIdentifier("GlassWindowContainer")
+    func makeNSView(context: Context) -> WindowGlass { WindowGlass(isResizable: isResizable) }
+    func updateNSView(_ nsView: WindowGlass, context: Context) {}
+
+    final class WindowGlass: NSGlassEffectView {
+        let isResizable: Bool
+
+        init(isResizable: Bool) {
+            self.isResizable = isResizable
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            guard let window, window.contentView?.identifier != Self.containerID, let hosting = window.contentView else { return }
+            guard let window else { return }
             window.isOpaque = false
             window.backgroundColor = .clear
-            let bounds = NSRect(origin: .zero, size: window.contentRect(forFrameRect: window.frame).size)
-            let container = NSView(frame: bounds)
-            container.identifier = Self.containerID
-            let glass = NSGlassEffectView(frame: bounds)
-            glass.autoresizingMask = [.width, .height]
-            hosting.frame = bounds
-            hosting.autoresizingMask = [.width, .height]
-            window.contentView = container
-            container.addSubview(glass)
-            container.addSubview(hosting)
+            if !isResizable { window.styleMask.remove(.resizable) }
         }
     }
 }
 
 extension View {
-    func glassWindowBackground() -> some View {
+    func glassWindowBackground(isResizable: Bool = false) -> some View {
         containerBackground(.clear, for: .window)
-            .background(GlassWindowBody())
+            .background(GlassWindowBody(isResizable: isResizable).ignoresSafeArea())
     }
 }
