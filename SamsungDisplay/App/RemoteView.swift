@@ -15,7 +15,7 @@ struct RemoteView: View {
                 Divider()
                 VStack(spacing: 2) {
                     MenuRow(title: "Source", systemImage: "rectangle.on.rectangle") { controller.openInputSourceMenu() }
-                    MenuRow(title: "Next HDMI input", systemImage: "rectangle.2.swap") { controller.nextHDMIInput() }
+                    MenuRow(title: "Next input", systemImage: "rectangle.2.swap") { controller.nextHDMIInput() }
                 }
                 .padding(.horizontal, -8)
                 .disabled(!isConnected)
