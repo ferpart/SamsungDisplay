@@ -17,7 +17,7 @@ struct DiscoveredMonitorsView: View {
                 .buttonStyle(.glass)
                 .disabled(discovery.isSearching)
             }
-            ForEach(discovery.monitors, id: \.wifiMac) { monitor in
+            ForEach(discovery.monitors, id: \.ip) { monitor in
                 Button { onSelect(monitor) } label: {
                     VStack(alignment: .leading) {
                         Text(monitor.name).font(.headline)
