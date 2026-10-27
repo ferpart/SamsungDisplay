@@ -25,6 +25,7 @@ struct AppPreferences: @unchecked Sendable {
         static let monitorMAC = "monitorMAC"
         static let audioOutputName = "audioOutputName"
         static let appearance = "appearance"
+        static let automaticUpdateChecks = "automaticUpdateChecks"
     }
 
     var monitorIP: String? {
@@ -65,5 +66,10 @@ struct AppPreferences: @unchecked Sendable {
     var appearance: AppearanceMode {
         get { defaults.string(forKey: Key.appearance).flatMap(AppearanceMode.init(rawValue:)) ?? .automatic }
         nonmutating set { defaults.set(newValue.rawValue, forKey: Key.appearance) }
+    }
+
+    var automaticUpdateChecks: Bool {
+        get { defaults.object(forKey: Key.automaticUpdateChecks) as? Bool ?? true }
+        nonmutating set { defaults.set(newValue, forKey: Key.automaticUpdateChecks) }
     }
 }

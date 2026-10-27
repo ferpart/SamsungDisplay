@@ -7,12 +7,12 @@ struct SamsungDisplayApp: App {
 
     var body: some Scene {
         MenuBarExtra("SamsungDisplay", image: appDelegate.controller.state.menuBarImage(animationStep: appDelegate.menuBarAnimator.step)) {
-            PopoverContent(controller: appDelegate.controller)
+            PopoverContent(controller: appDelegate.controller, updates: appDelegate.updates)
         }
         .menuBarExtraStyle(.window)
 
         Window("Settings", id: "settings") {
-            SettingsView(controller: appDelegate.controller, permission: appDelegate.volumeKeys.permission)
+            SettingsView(controller: appDelegate.controller, permission: appDelegate.volumeKeys.permission, updates: appDelegate.updates)
         }
         .windowResizability(.contentMinSize)
 
@@ -41,6 +41,7 @@ enum AppLaunch {
 final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
     let controller = ConnectionController()
     let menuBarAnimator = MenuBarAnimator()
+    let updates = UpdateChecker()
     private(set) lazy var volumeKeys = VolumeKeyRouter(controller: controller)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -50,6 +51,7 @@ final class SamsungDisplayAppDelegate: NSObject, NSApplicationDelegate {
         animateMenuBarWhileConnecting()
         controller.bootstrap()
         volumeKeys.start()
+        updates.startAutomaticChecks()
     }
 
     private func animateMenuBarWhileConnecting() {

@@ -68,3 +68,15 @@ final class AppPreferencesTests: XCTestCase {
         XCTAssertEqual(AppearanceMode.dark.nsAppearance?.name, .darkAqua)
     }
 }
+
+extension AppPreferencesTests {
+    func test_automaticUpdateChecks_defaultsToOn() {
+        XCTAssertTrue(prefs.automaticUpdateChecks)
+    }
+
+    func test_automaticUpdateChecks_roundTripsOff() {
+        prefs.automaticUpdateChecks = false
+        XCTAssertFalse(prefs.automaticUpdateChecks)
+        XCTAssertEqual(suite.object(forKey: "automaticUpdateChecks") as? Bool, false)
+    }
+}
