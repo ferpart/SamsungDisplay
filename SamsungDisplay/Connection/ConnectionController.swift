@@ -81,10 +81,10 @@ final class ConnectionController {
         if lifecycleTask != nil {
             return
         }
-        guard let ip = preferences.monitorIP, !ip.isEmpty else {
+        guard let ip = preferences.monitorIP, isIPv4Address(ip) else {
             state = .noIP
             statusMessage = "Not connected — set monitor IP in Settings"
-            append("bootstrap: no IP configured")
+            append("bootstrap: no valid IP configured")
             return
         }
         start(ip: ip)
@@ -186,9 +186,16 @@ final class ConnectionController {
         send(.hdmi)
     }
 
-    func connect(to ip: String) {
+    @discardableResult
+    func connect(to ip: String) -> Bool {
+        guard isIPv4Address(ip) else {
+            statusMessage = "Enter an IPv4 address, for example 192.168.1.10"
+            append("rejected monitor address")
+            return false
+        }
         preferences.monitorIP = ip
         start(ip: ip)
+        return true
     }
 
     func forgetMonitor() {

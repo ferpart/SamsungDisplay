@@ -16,8 +16,8 @@ struct SamsungDeviceInfo: Decodable, Sendable, Equatable {
         let device: SamsungDeviceInfo
     }
 
-    static func url(host: String) -> URL {
-        URL(string: "http://\(host):8001/api/v2/")!
+    static func url(host: String) -> URL? {
+        URL(string: "http://\(host):8001/api/v2/")
     }
 
     static func decode(_ data: Data) throws -> SamsungDeviceInfo {

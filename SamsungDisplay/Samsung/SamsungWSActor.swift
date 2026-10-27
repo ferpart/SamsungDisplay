@@ -102,7 +102,9 @@ actor SamsungWSActor {
                                     delegateQueue: nil)
         self.session = urlSession
 
-        let url = samsungWebSocketURL(host: ip, appName: appName, token: token, port: port)
+        guard let url = samsungWebSocketURL(host: ip, appName: appName, token: token, port: port) else {
+            throw URLError(.badURL)
+        }
         logOutgoingURL(url)
 
         let wsTask = urlSession.webSocketTask(with: url)

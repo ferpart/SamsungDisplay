@@ -128,8 +128,7 @@ struct OnboardingView: View {
     }
 
     private func connect(to ip: String) {
-        storedIP = ip
-        controller.connect(to: ip)
+        if controller.connect(to: ip) { storedIP = ip }
     }
 
     private func changeMonitor() {

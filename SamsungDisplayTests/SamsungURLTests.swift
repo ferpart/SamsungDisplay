@@ -14,7 +14,7 @@ final class SamsungURLTests: XCTestCase {
     // MARK: - URL structure (without token)
 
     func test_url_withoutToken_hasCorrectSchemeHostPortPath() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil)
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil))
 
         XCTAssertEqual(url.scheme, "wss")
         XCTAssertEqual(url.host, "192.168.1.50")
@@ -23,7 +23,7 @@ final class SamsungURLTests: XCTestCase {
     }
 
     func test_url_withoutToken_hasBase64EncodedNameQueryItem() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil)
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil))
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         let queryItems = components.queryItems ?? []
 
@@ -36,7 +36,7 @@ final class SamsungURLTests: XCTestCase {
     }
 
     func test_url_withoutToken_doesNotIncludeTokenQueryItem() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil)
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil))
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         let queryItems = components.queryItems ?? []
         XCTAssertNil(queryItems.first(where: { $0.name == "token" }))
@@ -45,7 +45,7 @@ final class SamsungURLTests: XCTestCase {
     // MARK: - URL structure (with token)
 
     func test_url_withToken_appendsTokenQueryItem() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123")
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123"))
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         let queryItems = components.queryItems ?? []
 
@@ -54,7 +54,7 @@ final class SamsungURLTests: XCTestCase {
     }
 
     func test_url_withToken_tokenAppearsAfterName() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123")
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123"))
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         let queryItems = components.queryItems ?? []
 
@@ -64,7 +64,7 @@ final class SamsungURLTests: XCTestCase {
     }
 
     func test_url_withToken_preservesAllOtherComponents() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123")
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123"))
 
         XCTAssertEqual(url.scheme, "wss")
         XCTAssertEqual(url.host, "192.168.1.50")
@@ -74,16 +74,30 @@ final class SamsungURLTests: XCTestCase {
 
     // MARK: - Port fallback
 
-    func test_port8001_usesPlainWebSocket() {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil, port: 8001)
+    func test_port8001_usesPlainWebSocket() throws {
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: nil, port: 8001))
         XCTAssertEqual(url.scheme, "ws")
         XCTAssertEqual(url.port, 8001)
     }
 
     func test_port8001_neverSendsToken() throws {
-        let url = samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123", port: 8001)
+        let url = try XCTUnwrap(samsungWebSocketURL(host: "192.168.1.50", appName: "SamsungDisplay", token: "abc123", port: 8001))
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
         XCTAssertNil(components.queryItems?.first(where: { $0.name == "token" }))
+    }
+
+    func test_invalidHost_returnsNil() {
+        for host in ["fe80::1", "a b", "%zz"] {
+            XCTAssertNil(samsungWebSocketURL(host: host, appName: "SamsungDisplay", token: nil), host)
+            XCTAssertNil(SamsungDeviceInfo.url(host: host), host)
+        }
+    }
+
+    func test_isIPv4Address_acceptsOnlyDottedQuads() {
+        XCTAssertTrue(isIPv4Address("192.168.1.50"))
+        for text in ["1.2.3", "01.2.3.4", "127.1", " 1.2.3.4", "fe80::1", "a b", "256.1.1.1", ""] {
+            XCTAssertFalse(isIPv4Address(text), text)
+        }
     }
 
     func test_fallback_tries8002Then8001() async throws {

@@ -341,6 +341,20 @@ final class ConnectionControllerTests: XCTestCase {
         controller.stop()
     }
 
+    func test_connectTo_rejectsAddressThatIsNotIPv4() {
+        let controller = makeController()
+        XCTAssertFalse(controller.connect(to: "fe80::1"))
+        XCTAssertNil(preferences.monitorIP)
+        XCTAssertTrue(spy.connectCalls.isEmpty)
+    }
+
+    func test_bootstrap_withInvalidStoredIP_staysInNoIP() {
+        preferences.monitorIP = "a b"
+        let controller = makeController()
+        controller.bootstrap()
+        XCTAssertEqual(controller.state, .noIP)
+    }
+
     func test_forgetMonitor_clearsIPAndReturnsToNoIP() async throws {
         let controller = try await connectedController()
         controller.forgetMonitor()

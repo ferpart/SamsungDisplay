@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 /// Build the WebSocket URL Samsung Tizen expects for the remote-control channel.
 ///
@@ -16,11 +17,7 @@ import Foundation
 /// Pitfall #6: base64 must be unpadded-trim-free — use the exact output of
 /// `Data(_:).base64EncodedString()` (padding included). The Samsung server
 /// accepts the standard `=`-padded form.
-///
-/// All inputs are statically valid (scheme/host/path never user-controlled in
-/// a way that would produce an invalid URL), so the internal force-unwrap is
-/// safe.
-func samsungWebSocketURL(host: String, appName: String, token: String?, port: Int = 8002) -> URL {
+func samsungWebSocketURL(host: String, appName: String, token: String?, port: Int = 8002) -> URL? {
     var components = URLComponents()
     components.scheme = port == 8001 ? "ws" : "wss"
     components.host = host
@@ -34,7 +31,11 @@ func samsungWebSocketURL(host: String, appName: String, token: String?, port: In
     }
     components.queryItems = queryItems
 
-    return components.url!
+    return components.url
+}
+
+func isIPv4Address(_ text: String) -> Bool {
+    IPv4Address(text).map(String.init(describing:)) == text
 }
 
 let samsungRemotePorts = [8002, 8001]
