@@ -51,7 +51,7 @@ struct SamsungConnection: Sendable, Equatable {
 /// * NOT log the raw token at info level — credentials gated to `#if DEBUG`.
 /// * NOT use Starscream — URLSessionWebSocketTask is the chosen transport.
 /// * NOT swallow errors in the receive loop — surfaced via `throws`.
-/// * NOT touch the keychain wrapper here — the actor returns the token; the
+/// * NOT persist the token here — the actor returns the token; the
 ///   harness owns persistence so the actor stays pure-protocol and easy to
 ///   unit-test in isolation.
 actor SamsungWSActor {

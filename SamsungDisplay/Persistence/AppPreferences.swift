@@ -2,8 +2,7 @@ import Foundation
 
 /// UserDefaults-backed storage for non-sensitive app preferences.
 ///
-/// The monitor IP is on the user's LAN and already known to them — Keychain
-/// would be overkill (per `01-RESEARCH.md` "Standard Stack > Supporting").
+/// The monitor IP is on the user's LAN and already known to them.
 /// Phase 3's Settings view will wrap this in an `@Observable` for SwiftUI
 /// binding, but the underlying storage shape stays the same.
 ///

@@ -20,15 +20,11 @@ final class ConnectionControllerTests: XCTestCase {
         suiteName = "ConnectionControllerTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
         preferences = AppPreferences(defaults: defaults)
-        // Unique keychain service per test run so we don't pollute the real
-        // app keychain item (RESEARCH.md Pitfall #3 — token store hygiene).
-        tokens = TokenStore(service: "tests.SamsungDisplay.token.\(UUID().uuidString)")
-        pins = TokenStore(service: "tests.SamsungDisplay.pin.\(UUID().uuidString)")
+        tokens = TokenStore(defaults: defaults, service: "token")
+        pins = TokenStore(defaults: defaults, service: "pin")
     }
 
     override func tearDown() async throws {
-        tokens.deleteAll()
-        pins.deleteAll()
         defaults.removePersistentDomain(forName: suiteName)
         spy = nil
         lan = nil
@@ -141,19 +137,19 @@ final class ConnectionControllerTests: XCTestCase {
         )
     }
 
-    // CONN-06: wipeTokenAndReconnect clears keychain and re-enters connecting.
+    // CONN-06: wipeTokenAndReconnect clears the token and re-enters connecting.
     func test_wipeToken_restartsLoop() async throws {
         preferences.monitorIP = "192.168.1.10"
         spy.nextConnectOutcome = .hang
 
-        try tokens.save("old-token", for: "192.168.1.10")
+        tokens.save("old-token", for: "192.168.1.10")
         XCTAssertEqual(tokens.load(for: "192.168.1.10"), "old-token")
 
         let controller = makeController()
         controller.wipeTokenAndReconnect()
 
         try await waitFor { self.spy.connectCalls.count == 1 }
-        XCTAssertNil(tokens.load(for: "192.168.1.10"), "wipeTokenAndReconnect must delete the keychain item")
+        XCTAssertNil(tokens.load(for: "192.168.1.10"), "wipeTokenAndReconnect must delete the stored token")
         XCTAssertEqual(spy.connectCalls.first?.ip, "192.168.1.10")
         XCTAssertNil(
             spy.connectCalls.first?.token,
@@ -344,7 +340,7 @@ final class ConnectionControllerTests: XCTestCase {
     }
 
     func test_connectTo_newIP_doesNotSendTokenOfAnotherIP() async throws {
-        try tokens.save("token-for-old-ip", for: "192.168.1.10")
+        tokens.save("token-for-old-ip", for: "192.168.1.10")
         spy.nextConnectOutcome = .success(token: "token-for-new-ip")
         let controller = makeController()
         controller.connect(to: "192.168.1.77")
@@ -382,7 +378,7 @@ final class ConnectionControllerTests: XCTestCase {
     func test_wipeToken_clearsCertificatePin() async throws {
         preferences.monitorIP = "192.168.1.10"
         spy.nextConnectOutcome = .hang
-        try pins.save("old-certificate", for: "192.168.1.10")
+        pins.save("old-certificate", for: "192.168.1.10")
         let controller = makeController()
         controller.wipeTokenAndReconnect()
         try await waitFor { self.spy.connectCalls.count == 1 }
