@@ -2,10 +2,10 @@
   <title>Samsung Display — app icon</title>
   <desc>Minimal blue app icon depicting a monitor with three volume level bars.</desc>
   <rect width="512" height="512" rx="112" fill="#101827"/>
-  <rect x="85" y="125" width="342" height="232" rx="27" stroke="#FFFFFF" stroke-width="20"/>
-  <path d="M214 396H298" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-  <path d="M256 358V395" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-  <rect x="188" y="238" width="24" height="67" rx="12" fill="#FFFFFF"/>
-  <rect x="244" y="202" width="24" height="103" rx="12" fill="#FFFFFF"/>
-  <rect x="300" y="167" width="24" height="138" rx="12" fill="#FFFFFF"/>
+  <rect x="85" y="125" width="342" height="232" rx="27" stroke="#78A9FF" stroke-width="20"/>
+  <path d="M214 396H298" stroke="#78A9FF" stroke-width="20" stroke-linecap="round"/>
+  <path d="M256 358V395" stroke="#78A9FF" stroke-width="20" stroke-linecap="round"/>
+  <rect x="188" y="238" width="24" height="67" rx="12" fill="#78A9FF"/>
+  <rect x="244" y="202" width="24" height="103" rx="12" fill="#78A9FF"/>
+  <rect x="300" y="167" width="24" height="138" rx="12" fill="#78A9FF"/>
 </svg>
