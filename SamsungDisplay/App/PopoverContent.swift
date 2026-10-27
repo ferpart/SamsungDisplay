@@ -88,15 +88,11 @@ struct PopoverContent: View {
     }
 
     private var certificateMismatchSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(ConnectionController.certificateMismatchExplanation)
-                .font(.callout)
-                .fixedSize(horizontal: false, vertical: true)
-            Button("Wipe token and re-pair") { controller.wipeTokenAndReconnect() }
-                .buttonStyle(.glassProminent)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        Text("The monitor certificate changed. If you did not reset the monitor, another device may pose as it. If you trust this network, select Wipe token and re-pair in Settings.")
+            .font(.callout)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
     }
 
     private var statusText: String {
