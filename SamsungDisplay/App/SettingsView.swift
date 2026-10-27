@@ -64,11 +64,14 @@ struct SettingsView: View {
 
     private var generalSection: some View {
         Section("General") {
-            Picker("Appearance", selection: $appearance) {
-                ForEach(AppearanceMode.allCases, id: \.self) { Text($0.title).tag($0) }
+            LabeledContent("Appearance") {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppearanceMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .fixedSize()
             }
-            .pickerStyle(.segmented)
-            .fixedSize()
             .onChange(of: appearance) { _, mode in
                 preferences.appearance = mode
                 NSApp.appearance = mode.nsAppearance

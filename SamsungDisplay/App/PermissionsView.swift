@@ -30,6 +30,7 @@ struct PermissionsView: View {
             if !permission.isGranted {
                 Button("Allow volume keys…") { permission.request() }
                     .buttonStyle(.glassProminent)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .task {
@@ -69,6 +70,7 @@ private struct PermissionRow: View {
                 }
             }
             .controlSize(.small)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 }
